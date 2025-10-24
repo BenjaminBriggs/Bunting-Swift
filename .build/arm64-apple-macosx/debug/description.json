@@ -15,8 +15,8 @@
     }
   },
   "generatedSourceTargetSet" : [
-    "BuntingCodegenPlugin",
-    "FetchConfigPlugin"
+    "FetchConfigPlugin",
+    "BuntingCodegenPlugin"
   ],
   "pluginDescriptions" : [
     {
@@ -66,6 +66,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/BuntingEventsDelegate.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/Bucketing.swift"
         },
         {
@@ -79,6 +83,14 @@
         {
           "kind" : "file",
           "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/FlagEvaluator.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/MemoizationCache.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Generated/BuntingPathsBase.swift"
         },
         {
           "kind" : "file",
@@ -134,6 +146,18 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/SwiftUI/BuntingDebugView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/SwiftUI/BuntingFlag.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/SwiftUI/BuntingInfoView.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/swift-version-39B54973F684ADAB.txt"
         },
         {
@@ -146,10 +170,13 @@
       "moduleOutputPath" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Modules/Bunting.swiftmodule",
       "objects" : [
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/Bunting.swift.o",
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingEventsDelegate.swift.o",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/Bucketing.swift.o",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/ConditionEvaluator.swift.o",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/EvaluationContext.swift.o",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/FlagEvaluator.swift.o",
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/MemoizationCache.swift.o",
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingPathsBase.swift.o",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingIdentity.swift.o",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingConfiguration.swift.o",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingEnvironment.swift.o",
@@ -162,7 +189,10 @@
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/Variant.swift.o",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BootstrapConfig.swift.o",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/ConfigStore.swift.o",
-        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/OverridesStore.swift.o"
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/OverridesStore.swift.o",
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingDebugView.swift.o",
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingFlag.swift.o",
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingInfoView.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -185,6 +215,7 @@
         "-emit-objc-header",
         "-emit-objc-header-path",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/include/Bunting-Swift.h",
+        "-color-diagnostics",
         "-swift-version",
         "6",
         "-plugin-path",
@@ -227,6 +258,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingEventsDelegate.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/Bucketing.swift.o"
         },
         {
@@ -240,6 +275,14 @@
         {
           "kind" : "file",
           "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/FlagEvaluator.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/MemoizationCache.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingPathsBase.swift.o"
         },
         {
           "kind" : "file",
@@ -295,16 +338,31 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingDebugView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingFlag.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingInfoView.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Modules/Bunting.swiftmodule"
         }
       ],
       "prepareForIndexing" : false,
       "sources" : [
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Bunting.swift",
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/BuntingEventsDelegate.swift",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/Bucketing.swift",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/ConditionEvaluator.swift",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/EvaluationContext.swift",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/FlagEvaluator.swift",
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/MemoizationCache.swift",
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Generated/BuntingPathsBase.swift",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Identity/BuntingIdentity.swift",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Models/BuntingConfiguration.swift",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Models/BuntingEnvironment.swift",
@@ -317,7 +375,10 @@
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Models/Variant.swift",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Storage/BootstrapConfig.swift",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Storage/ConfigStore.swift",
-        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Storage/OverridesStore.swift"
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Storage/OverridesStore.swift",
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/SwiftUI/BuntingDebugView.swift",
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/SwiftUI/BuntingFlag.swift",
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/SwiftUI/BuntingInfoView.swift"
       ],
       "tempsPath" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build",
       "wholeModuleOptimization" : false
@@ -373,6 +434,7 @@
         "-emit-objc-header",
         "-emit-objc-header-path",
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingPackageTests.build/include/BuntingPackageTests-Swift.h",
+        "-color-diagnostics",
         "-plugin-path",
         "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
         "-sdk",
@@ -438,6 +500,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Tests/BuntingTests/TestAndRolloutEvaluationTests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/swift-version-39B54973F684ADAB.txt"
         },
         {
@@ -454,7 +520,8 @@
       "moduleOutputPath" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Modules/BuntingTests.swiftmodule",
       "objects" : [
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build/BucketingTests.swift.o",
-        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build/ConditionEvaluatorTests.swift.o"
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build/ConditionEvaluatorTests.swift.o",
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build/TestAndRolloutEvaluationTests.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -476,6 +543,7 @@
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/ModuleCache",
         "-parseable-output",
         "-parse-as-library",
+        "-color-diagnostics",
         "-swift-version",
         "6",
         "-plugin-path",
@@ -522,13 +590,18 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build/TestAndRolloutEvaluationTests.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Modules/BuntingTests.swiftmodule"
         }
       ],
       "prepareForIndexing" : false,
       "sources" : [
         "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Tests/BuntingTests/BucketingTests.swift",
-        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Tests/BuntingTests/ConditionEvaluatorTests.swift"
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Tests/BuntingTests/ConditionEvaluatorTests.swift",
+        "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Tests/BuntingTests/TestAndRolloutEvaluationTests.swift"
       ],
       "tempsPath" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build",
       "wholeModuleOptimization" : false
@@ -578,6 +651,7 @@
         "-entry-point-function-name",
         "-Xfrontend",
         "bunting_cli_main",
+        "-color-diagnostics",
         "-swift-version",
         "6",
         "-plugin-path",
@@ -675,6 +749,7 @@
         "-entry-point-function-name",
         "-Xfrontend",
         "bunting_cli_main",
+        "-color-diagnostics",
         "-swift-version",
         "6",
         "-plugin-path",
@@ -772,6 +847,7 @@
         "-entry-point-function-name",
         "-Xfrontend",
         "bunting_codegen_main",
+        "-color-diagnostics",
         "-swift-version",
         "6",
         "-plugin-path",
@@ -869,6 +945,7 @@
         "-entry-point-function-name",
         "-Xfrontend",
         "bunting_codegen_main",
+        "-color-diagnostics",
         "-swift-version",
         "6",
         "-plugin-path",
@@ -934,10 +1011,13 @@
       "bunting_sdk_swift",
       "-c",
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Bunting.swift",
+      "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/BuntingEventsDelegate.swift",
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/Bucketing.swift",
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/ConditionEvaluator.swift",
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/EvaluationContext.swift",
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/FlagEvaluator.swift",
+      "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/MemoizationCache.swift",
+      "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Generated/BuntingPathsBase.swift",
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Identity/BuntingIdentity.swift",
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Models/BuntingConfiguration.swift",
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Models/BuntingEnvironment.swift",
@@ -951,6 +1031,9 @@
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Storage/BootstrapConfig.swift",
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Storage/ConfigStore.swift",
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Storage/OverridesStore.swift",
+      "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/SwiftUI/BuntingDebugView.swift",
+      "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/SwiftUI/BuntingFlag.swift",
+      "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/SwiftUI/BuntingInfoView.swift",
       "-I",
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -973,6 +1056,7 @@
       "-emit-objc-header",
       "-emit-objc-header-path",
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/include/Bunting-Swift.h",
+      "-color-diagnostics",
       "-swift-version",
       "6",
       "-plugin-path",
@@ -1041,6 +1125,7 @@
       "-emit-objc-header",
       "-emit-objc-header-path",
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingPackageTests.build/include/BuntingPackageTests-Swift.h",
+      "-color-diagnostics",
       "-plugin-path",
       "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
       "-sdk",
@@ -1084,6 +1169,7 @@
       "-c",
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Tests/BuntingTests/BucketingTests.swift",
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Tests/BuntingTests/ConditionEvaluatorTests.swift",
+      "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Tests/BuntingTests/TestAndRolloutEvaluationTests.swift",
       "-I",
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -1105,6 +1191,7 @@
       "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/ModuleCache",
       "-parseable-output",
       "-parse-as-library",
+      "-color-diagnostics",
       "-swift-version",
       "6",
       "-plugin-path",
@@ -1171,6 +1258,7 @@
       "-entry-point-function-name",
       "-Xfrontend",
       "bunting_cli_main",
+      "-color-diagnostics",
       "-swift-version",
       "6",
       "-plugin-path",
@@ -1237,6 +1325,7 @@
       "-entry-point-function-name",
       "-Xfrontend",
       "bunting_codegen_main",
+      "-color-diagnostics",
       "-swift-version",
       "6",
       "-plugin-path",
@@ -1327,6 +1416,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/BuntingEventsDelegate.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/Bucketing.swift"
         },
         {
@@ -1340,6 +1433,14 @@
         {
           "kind" : "file",
           "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/FlagEvaluator.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/MemoizationCache.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Generated/BuntingPathsBase.swift"
         },
         {
           "kind" : "file",
@@ -1392,6 +1493,18 @@
         {
           "kind" : "file",
           "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Storage/OverridesStore.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/SwiftUI/BuntingDebugView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/SwiftUI/BuntingFlag.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/SwiftUI/BuntingInfoView.swift"
         }
       ],
       "outputFilePath" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/sources"
@@ -1435,11 +1548,31 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingDebugView.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingEnvironment.swift.o"
         },
         {
           "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingEventsDelegate.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingFlag.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingIdentity.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingInfoView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingPathsBase.swift.o"
         },
         {
           "kind" : "file",
@@ -1475,6 +1608,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/MemoizationCache.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/OverridesStore.swift.o"
         },
         {
@@ -1500,6 +1637,10 @@
         {
           "kind" : "file",
           "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build/ConditionEvaluatorTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build/TestAndRolloutEvaluationTests.swift.o"
         }
       ],
       "outputFilePath" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingPackageTests.product/Objects.LinkFileList"
@@ -1518,6 +1659,10 @@
         {
           "kind" : "file",
           "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Tests/BuntingTests/ConditionEvaluatorTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Tests/BuntingTests/TestAndRolloutEvaluationTests.swift"
         }
       ],
       "outputFilePath" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build/sources"

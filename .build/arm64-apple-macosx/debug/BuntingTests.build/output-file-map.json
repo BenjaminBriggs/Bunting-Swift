@@ -15,5 +15,12 @@
     "swiftmodule": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build/ConditionEvaluatorTests~partial.swiftmodule",
     "swift-dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build/ConditionEvaluatorTests.swiftdeps",
     "diagnostics": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build/ConditionEvaluatorTests.dia"
+  },
+  "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Tests/BuntingTests/TestAndRolloutEvaluationTests.swift": {
+    "dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build/TestAndRolloutEvaluationTests.d",
+    "object": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build/TestAndRolloutEvaluationTests.swift.o",
+    "swiftmodule": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build/TestAndRolloutEvaluationTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build/TestAndRolloutEvaluationTests.swiftdeps",
+    "diagnostics": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/BuntingTests.build/TestAndRolloutEvaluationTests.dia"
   }
 }

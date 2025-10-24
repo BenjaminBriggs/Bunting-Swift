@@ -9,6 +9,13 @@
     "swift-dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/Bunting.swiftdeps",
     "diagnostics": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/Bunting.dia"
   },
+  "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/BuntingEventsDelegate.swift": {
+    "dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingEventsDelegate.d",
+    "object": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingEventsDelegate.swift.o",
+    "swiftmodule": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingEventsDelegate~partial.swiftmodule",
+    "swift-dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingEventsDelegate.swiftdeps",
+    "diagnostics": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingEventsDelegate.dia"
+  },
   "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/Bucketing.swift": {
     "dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/Bucketing.d",
     "object": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/Bucketing.swift.o",
@@ -36,6 +43,20 @@
     "swiftmodule": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/FlagEvaluator~partial.swiftmodule",
     "swift-dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/FlagEvaluator.swiftdeps",
     "diagnostics": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/FlagEvaluator.dia"
+  },
+  "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Evaluation/MemoizationCache.swift": {
+    "dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/MemoizationCache.d",
+    "object": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/MemoizationCache.swift.o",
+    "swiftmodule": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/MemoizationCache~partial.swiftmodule",
+    "swift-dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/MemoizationCache.swiftdeps",
+    "diagnostics": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/MemoizationCache.dia"
+  },
+  "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Generated/BuntingPathsBase.swift": {
+    "dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingPathsBase.d",
+    "object": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingPathsBase.swift.o",
+    "swiftmodule": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingPathsBase~partial.swiftmodule",
+    "swift-dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingPathsBase.swiftdeps",
+    "diagnostics": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingPathsBase.dia"
   },
   "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/Identity/BuntingIdentity.swift": {
     "dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingIdentity.d",
@@ -127,5 +148,26 @@
     "swiftmodule": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/OverridesStore~partial.swiftmodule",
     "swift-dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/OverridesStore.swiftdeps",
     "diagnostics": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/OverridesStore.dia"
+  },
+  "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/SwiftUI/BuntingDebugView.swift": {
+    "dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingDebugView.d",
+    "object": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingDebugView.swift.o",
+    "swiftmodule": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingDebugView~partial.swiftmodule",
+    "swift-dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingDebugView.swiftdeps",
+    "diagnostics": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingDebugView.dia"
+  },
+  "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/SwiftUI/BuntingFlag.swift": {
+    "dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingFlag.d",
+    "object": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingFlag.swift.o",
+    "swiftmodule": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingFlag~partial.swiftmodule",
+    "swift-dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingFlag.swiftdeps",
+    "diagnostics": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingFlag.dia"
+  },
+  "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/Bunting/SwiftUI/BuntingInfoView.swift": {
+    "dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingInfoView.d",
+    "object": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingInfoView.swift.o",
+    "swiftmodule": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingInfoView~partial.swiftmodule",
+    "swift-dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingInfoView.swiftdeps",
+    "diagnostics": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/BuntingInfoView.dia"
   }
 }

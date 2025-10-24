@@ -7,6 +7,18 @@ public struct Condition: Codable, Sendable, Hashable {
     public let values: [String]
     public let `operator`: ConditionOperator
 
+    public init(
+        id: String,
+        type: ConditionType,
+        values: [String],
+        operator: ConditionOperator
+    ) {
+        self.id = id
+        self.type = type
+        self.values = values
+        self.operator = `operator`
+    }
+
     enum CodingKeys: String, CodingKey {
         case id
         case type

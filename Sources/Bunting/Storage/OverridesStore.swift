@@ -1,7 +1,7 @@
 import Foundation
 
 /// Sendable wrapper for override values
-enum OverrideValue: Sendable {
+public enum OverrideValue: Sendable {
     case bool(Bool)
     case int(Int)
     case double(Double)

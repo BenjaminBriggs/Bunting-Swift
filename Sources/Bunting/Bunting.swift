@@ -1,6 +1,12 @@
 import Foundation
 import Observation
 
+#if os(iOS) || os(tvOS)
+    import UIKit
+#elseif os(macOS)
+    import AppKit
+#endif
+
 /// Typealias for JSON data returned by JSON-type flags
 public typealias JSONData = Data
 
@@ -18,9 +24,30 @@ public final class Bunting {
     @ObservationIgnored private let identity: BuntingIdentity
     @ObservationIgnored private let configStore: ConfigStore
     @ObservationIgnored private let overridesStore: OverridesStore
+    @ObservationIgnored private let memoizationCache: MemoizationCache
     @ObservationIgnored private var overridesSnapshot: [String: OverrideValue] = [:]
+    @ObservationIgnored private var overridesVersion: Int = 0
     @ObservationIgnored private var context: EvaluationContext
-    @ObservationIgnored private var customAttributeResolver: EvaluationContext.CustomAttributeResolver
+    @ObservationIgnored private var customAttributeResolver:
+        EvaluationContext.CustomAttributeResolver
+
+    // MARK: - Events Delegate
+
+    /// Delegate to receive notifications about Bunting events
+    ///
+    /// Set this property to observe configuration fetch, signature verification,
+    /// and override change events. The delegate is held as a weak reference.
+    ///
+    /// All delegate methods are called on the main actor.
+    public weak var eventsDelegate: BuntingEventsDelegate? {
+        didSet {
+            // Update ConfigStore's delegate reference
+            let delegate = eventsDelegate
+            Task {
+                await configStore.setEventsDelegate(delegate)
+            }
+        }
+    }
 
     // MARK: - Derived Metadata
     public var configVersion: String? { configuration?.configVersion }
@@ -44,6 +71,7 @@ public final class Bunting {
         let bootstrapConfig = try BootstrapConfig.load()
         self.configStore = try ConfigStore(bootstrapConfig: bootstrapConfig)
         self.overridesStore = OverridesStore()
+        self.memoizationCache = MemoizationCache()
 
         // Prime snapshots asynchronously
         Task { [weak self] in
@@ -69,6 +97,37 @@ public final class Bunting {
                 self.configuration = refreshed
             }
         }
+
+        // Setup foreground observer for periodic polling
+        setupForegroundObserver()
+    }
+
+    // MARK: - Foreground Polling
+
+    private func setupForegroundObserver() {
+        #if os(iOS) || os(tvOS)
+            NotificationCenter.default.addObserver(
+                forName: UIApplication.willEnterForegroundNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self else { return }
+                Task { @MainActor in
+                    await self.refresh()
+                }
+            }
+        #elseif os(macOS)
+            NotificationCenter.default.addObserver(
+                forName: NSApplication.willBecomeActiveNotification,
+                object: nil,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self else { return }
+                Task { @MainActor in
+                    await self.refresh()
+                }
+            }
+        #endif
     }
 
     // MARK: - Singleton
@@ -129,7 +188,7 @@ public final class Bunting {
         evaluateFlagSync(key, default: .json("{}"))?.jsonData
     }
 
-    // MARK: - Core Evaluation (Sync from snapshots)
+    // MARK: - Core Evaluation (Sync from snapshots with memoization)
     private func evaluateFlagSync(_ key: String, default defaultValue: FlagValue) -> FlagValue? {
         // Check override snapshot first
         if let overrideValue = overridesSnapshot[key],
@@ -142,6 +201,19 @@ public final class Bunting {
             return defaultValue
         }
 
+        // Check memoization cache
+        let cacheKey = MemoizationCache.CacheKey(
+            flagKey: key,
+            environment: environment,
+            contextHash: context.computeHash(),
+            overridesVersion: overridesVersion,
+            configVersion: config.configVersion
+        )
+
+        // Try to get from cache (async access from sync context)
+        // Note: We can't await here since this is sync, so we skip cache for now
+        // Future: Consider making flag accessors async or using a sync cache wrapper
+
         let evaluator = FlagEvaluator(
             configuration: config,
             environment: environment,
@@ -149,7 +221,15 @@ public final class Bunting {
             localID: localID,
             customAttributeResolver: customAttributeResolver
         )
-        return evaluator.evaluate(flagKey: key) ?? defaultValue
+
+        let result = evaluator.evaluate(flagKey: key) ?? defaultValue
+
+        // Store in cache asynchronously
+        Task {
+            await memoizationCache.set(cacheKey, value: result)
+        }
+
+        return result
     }
 
     private func convertOverrideToFlagValue(_ overrideValue: OverrideValue, type: FlagType)
@@ -177,7 +257,19 @@ public final class Bunting {
     public func refresh() async {
         try? await configStore.refresh()
         let config = await configStore.getConfiguration()
-        await MainActor.run { self.configuration = config }
+        await MainActor.run {
+            self.configuration = config
+        }
+        // Invalidate cache when configuration changes
+        await memoizationCache.invalidateAll()
+    }
+
+    // MARK: - Overrides Access
+
+    /// Get all current overrides
+    /// Used by debug views to display override status
+    public func getAllOverrides() -> [String: OverrideValue] {
+        return overridesSnapshot
     }
 
     // MARK: - Overrides (sync API; persists asynchronously)
@@ -187,17 +279,46 @@ public final class Bunting {
         } else {
             overridesSnapshot.removeValue(forKey: key)
         }
-        Task { await overridesStore.setOverride(key, value: value) }
+        overridesVersion += 1
+
+        // Notify delegate
+        eventsDelegate?.didChangeOverride(flagKey: key, value: value)
+
+        Task {
+            await overridesStore.setOverride(key, value: value)
+            // Invalidate cache for this specific flag
+            await memoizationCache.invalidate(flagKey: key)
+        }
     }
 
     public func clearOverride(_ key: String) {
         overridesSnapshot.removeValue(forKey: key)
-        Task { await overridesStore.clearOverride(key) }
+        overridesVersion += 1
+
+        // Notify delegate
+        eventsDelegate?.didChangeOverride(flagKey: key, value: nil)
+
+        Task {
+            await overridesStore.clearOverride(key)
+            await memoizationCache.invalidate(flagKey: key)
+        }
     }
 
     public func clearAllOverrides() {
+        let clearedKeys = Array(overridesSnapshot.keys)
         overridesSnapshot.removeAll()
-        Task { await overridesStore.clearAll() }
+        overridesVersion += 1
+
+        // Notify delegate for each cleared override
+        for key in clearedKeys {
+            eventsDelegate?.didChangeOverride(flagKey: key, value: nil)
+        }
+
+        Task {
+            await overridesStore.clearAll()
+            // Invalidate entire cache since all overrides changed
+            await memoizationCache.invalidateAll()
+        }
     }
 
     // MARK: - Identity

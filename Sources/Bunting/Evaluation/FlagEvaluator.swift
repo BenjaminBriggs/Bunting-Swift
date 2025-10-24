@@ -39,7 +39,10 @@ struct FlagEvaluator {
                 if let conditions = variant.conditions,
                     conditionEvaluator.evaluateAll(conditions)
                 {
-                    return variant.value
+                    // Conditional variants use the single 'value' property
+                    if let value = variant.value {
+                        return value
+                    }
                 }
 
             case .test:
@@ -56,7 +59,10 @@ struct FlagEvaluator {
                     let rollout = configuration.rollouts[rolloutName],
                     evaluateRollout(rollout, conditionEvaluator: conditionEvaluator)
                 {
-                    return variant.value
+                    // Rollout variants use the single 'value' property
+                    if let value = variant.value {
+                        return value
+                    }
                 }
             }
         }
@@ -72,17 +78,32 @@ struct FlagEvaluator {
         variant: Variant,
         conditionEvaluator: ConditionEvaluator
     ) -> FlagValue? {
-        // Check test preconditions
+        // 1. Check test preconditions (test-level conditions)
         if test.conditions.isEmpty == false
             && conditionEvaluator.evaluateAll(test.conditions) == false
         {
             return nil
         }
 
-        // For v1, test variants simply return their value if preconditions pass
-        // Future versions will implement group-based bucketing with test.salt
-        // _ = Bucketing.bucket(salt: test.salt, localID: localID)
+        // 2. Compute bucket using test's salt (1-100)
+        let bucket = Bucketing.bucket(salt: test.salt, localID: localID)
 
+        // 3. Determine which group this bucket falls into
+        // If test defines groups, use those for bucketing
+        if let groupName = test.assignGroup(bucket: bucket) {
+            // Return the value for this group from variant.values
+            if let values = variant.values, let value = values[groupName] {
+                return value
+            }
+        }
+
+        // 4. Fallback: if no groups defined but variant has values dictionary,
+        // try to map bucket to first available group (legacy support)
+        if let values = variant.values, let firstValue = values.values.first {
+            return firstValue
+        }
+
+        // 5. Final fallback: use variant.value if present (simple test without groups)
         return variant.value
     }
 

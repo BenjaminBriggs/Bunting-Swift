@@ -51,7 +51,23 @@ The plugin generates strongly-typed Swift accessors from your flag definitions.
 **How to use**: Runs automatically during builds
 
 **Requirements**:
-- `BuntingConfig.json` in your project root
+- `BuntingConfig.json` in your project root (optional - see Fallback Mode below)
+
+**Fallback Mode**:
+
+The codegen plugin is designed to **never fail your build**. If `BuntingConfig.json` is missing or invalid, the plugin automatically generates a minimal fallback file that:
+- Defines empty `BuntingPaths` structure (required by `@BuntingFlag` property wrapper)
+- Includes `FlagDescriptor<T>` type definition
+- Contains no flag-specific accessors
+- Allows your code to compile even if typed accessors aren't available yet
+
+This means:
+✅ Your builds always succeed
+✅ No need to comment out `@BuntingFlag` usage during development
+✅ Easy onboarding - typed flags work as soon as you add config
+⚠️ Compilation errors if you try to use non-existent flag paths (e.g., `\.store.myFlag`)
+
+To enable typed accessors, simply add `BuntingConfig.json` and rebuild.
 
 **What it generates**:
 
@@ -146,9 +162,11 @@ Ensure your plist file is in one of these locations:
 - `Resources/` directory
 - `Example/BuntingExample/` directory
 
-### "BuntingConfig.json not found"
+### "BuntingConfig.json not found" or Invalid Config
 
-The codegen plugin needs a seed configuration file. You have three options:
+**Don't worry - your builds will still succeed!** The codegen plugin automatically generates a fallback file when the config is missing or invalid.
+
+To enable strongly-typed flag accessors, you have two options:
 
 **Option 1: Fetch from backend (Recommended)**
 - In Xcode: Right-click project → **Bunting** → **Fetch Config**
@@ -158,9 +176,10 @@ The codegen plugin needs a seed configuration file. You have three options:
 - Download config from your Bunting admin panel
 - Save as `BuntingConfig.json` in project root or app target directory
 
-**Option 3: Skip code generation**
-- The plugin is optional - builds will succeed without it
-- Use string-based flag access: `await Bunting.shared.bool("my/flag", default: false)`
+**During fallback mode:**
+- Use string-based flag access: `Bunting.shared.bool("my/flag", default: false)`
+- Don't use `@BuntingFlag` property wrapper (will cause compile errors for non-existent paths)
+- Check build logs for: `⚠️  Generated fallback accessors (no config available)`
 
 ### Generated code not updating
 

@@ -5,11 +5,12 @@ A self-hosted, open-source feature flag and rollout system for Apple platforms.
 ## Features
 
 - **Offline-First**: Local evaluation with signed artifact verification
-- **Strongly-Typed**: Generated accessors for type-safe flag access
+- **Strongly-Typed**: Generated accessors for type-safe flag access (with resilient fallback)
 - **Secure**: JWS signature verification with RS256
 - **Privacy-Preserving**: Deterministic bucketing with device-local UUID
 - **Multi-Environment**: Support for development, staging, and production
 - **Debug UI**: Built-in override and inspection tools
+- **Build Resilient**: Codegen never fails builds - automatically falls back when config is missing
 
 ## Requirements
 
@@ -217,6 +218,126 @@ Bunting.shared.clearOverride("store/use_new_paywall_design")
 // Clear all overrides
 Bunting.shared.clearAllOverrides()
 ```
+
+## SwiftUI Debug Views
+
+Bunting includes built-in SwiftUI views for debugging and development:
+
+### BuntingInfoView (Read-Only)
+
+Display configuration status and metadata:
+
+```swift
+import SwiftUI
+import Bunting
+
+struct SettingsView: View {
+    var body: some View {
+        NavigationStack {
+            BuntingInfoView()
+        }
+    }
+}
+```
+
+Shows:
+- Current environment
+- Config version and publication date
+- Signature verification status
+- Device identity (local ID)
+- Pull-to-refresh support
+
+### BuntingDebugView (Interactive)
+
+Full debug panel with override controls:
+
+```swift
+import SwiftUI
+import Bunting
+
+struct DebugMenuView: View {
+    var body: some View {
+        NavigationStack {
+            BuntingDebugView()
+        }
+    }
+}
+```
+
+Features:
+- All information from BuntingInfoView
+- Per-flag display grouped by namespace
+- Set/clear flag overrides
+- Manual refresh trigger
+- Reset identity with confirmation
+- Clear all overrides with confirmation
+
+### SwiftUI Environment Access
+
+Access Bunting via SwiftUI environment:
+
+```swift
+struct MyView: View {
+    @Environment(\.bunting) var bunting
+    
+    var body: some View {
+        Text("Config version: \(bunting.configVersion ?? "unknown")")
+    }
+}
+```
+
+## Event Observability
+
+Implement `BuntingEventsDelegate` to observe lifecycle events:
+
+```swift
+import Bunting
+import OSLog
+
+class BuntingObserver: BuntingEventsDelegate {
+    private let logger = Logger(subsystem: "com.example.app", category: "bunting")
+    
+    func didStartFetch(url: URL) {
+        logger.info("Fetching config from \(url)")
+    }
+    
+    func didCompleteFetch(success: Bool, error: Error?) {
+        if success {
+            logger.info("Config fetch succeeded")
+        } else {
+            logger.error("Config fetch failed: \(error?.localizedDescription ?? "unknown")")
+        }
+    }
+    
+    func didVerifySignature(success: Bool) {
+        logger.info("Signature verification: \(success ? "passed" : "failed")")
+    }
+    
+    func didLoadCachedConfig(version: String) {
+        logger.info("Loaded cached config version \(version)")
+    }
+    
+    func didChangeOverride(flagKey: String, value: Any?) {
+        if let value = value {
+            logger.debug("Override set: \(flagKey) = \(value)")
+        } else {
+            logger.debug("Override cleared: \(flagKey)")
+        }
+    }
+}
+
+// Set the delegate
+let observer = BuntingObserver()
+Bunting.shared.eventsDelegate = observer
+```
+
+Available delegate methods (all optional):
+- `didStartFetch(url:)` - Config fetch initiated
+- `didCompleteFetch(success:error:)` - Config fetch completed
+- `didVerifySignature(success:)` - Signature verification result
+- `didLoadCachedConfig(version:)` - Cached config loaded
+- `didChangeOverride(flagKey:value:)` - Override changed
+- `didFallbackToDefault(flagKey:)` - Flag fell back to default (not yet called)
 
 ## Identity Management
 

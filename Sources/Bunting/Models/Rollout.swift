@@ -8,4 +8,20 @@ public struct Rollout: Codable, Sendable {
     public let salt: String
     public let conditions: [Condition]
     public let percentage: Int
+
+    public init(
+        name: String,
+        description: String?,
+        type: String,
+        salt: String,
+        conditions: [Condition],
+        percentage: Int
+    ) {
+        self.name = name
+        self.description = description
+        self.type = type
+        self.salt = salt
+        self.conditions = conditions
+        self.percentage = percentage
+    }
 }

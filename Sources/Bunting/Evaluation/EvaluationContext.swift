@@ -18,8 +18,40 @@ public struct EvaluationContext: Sendable, Hashable {
     public let region: String?
     public let locale: String
 
+    public init(
+        platform: String,
+        osVersion: String,
+        appVersion: String,
+        buildNumber: String,
+        deviceModel: String,
+        region: String?,
+        locale: String
+    ) {
+        self.platform = platform
+        self.osVersion = osVersion
+        self.appVersion = appVersion
+        self.buildNumber = buildNumber
+        self.deviceModel = deviceModel
+        self.region = region
+        self.locale = locale
+    }
+
     /// Custom attributes resolver (not stored in context, passed separately)
     public typealias CustomAttributeResolver = @Sendable (String) -> Bool
+
+    /// Computes a hash of the context for memoization
+    /// This hash includes all stable runtime inputs that affect flag evaluation
+    public func computeHash() -> Int {
+        var hasher = Hasher()
+        hasher.combine(platform)
+        hasher.combine(osVersion)
+        hasher.combine(appVersion)
+        hasher.combine(buildNumber)
+        hasher.combine(deviceModel)
+        hasher.combine(region)
+        hasher.combine(locale)
+        return hasher.finalize()
+    }
 
     /// Creates an evaluation context with current system information
     public static func current(

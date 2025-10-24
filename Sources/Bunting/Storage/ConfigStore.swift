@@ -16,7 +16,16 @@ actor ConfigStore {
     private let configFileName = "config_v1.json"
     private let metadataFileName = "metadata.json"
 
-    init(bootstrapConfig: BootstrapConfig) throws {
+    // Delegate for event notifications
+    private weak var eventsDelegate: BuntingEventsDelegate?
+
+    /// Update the events delegate
+    func setEventsDelegate(_ delegate: BuntingEventsDelegate?) {
+        self.eventsDelegate = delegate
+    }
+
+    init(bootstrapConfig: BootstrapConfig, eventsDelegate: BuntingEventsDelegate? = nil) throws {
+        self.eventsDelegate = eventsDelegate
         self.bootstrapConfig = bootstrapConfig
 
         // Set up cache directory in Application Support
@@ -36,9 +45,17 @@ actor ConfigStore {
     }
 
     /// Loads cached config if available (should be called after init)
+    /// Falls back to bundled seed if no cache exists
     func loadCachedConfigIfNeeded() {
         guard activeConfig == nil else { return }
-        try? loadCachedConfig()
+
+        // Try loading from cache first
+        if (try? loadCachedConfig()) != nil {
+            return
+        }
+
+        // Fallback to bundled seed
+        try? loadBundledSeed()
     }
 
     // MARK: - Public API
@@ -96,6 +113,9 @@ actor ConfigStore {
         config.urlCache = nil
         let session = URLSession(configuration: config)
 
+        // Notify delegate that fetch is starting
+        await notifyDidStartFetch(url: url)
+
         let (data, response) = try await session.data(for: request)
         lastFetchTime = Date()
 
@@ -124,7 +144,14 @@ actor ConfigStore {
         }
 
         // Verify JWS signature
-        try verifySignature(signatureHeader, payload: data)
+        do {
+            try verifySignature(signatureHeader, payload: data)
+            await notifyDidVerifySignature(success: true)
+        } catch {
+            await notifyDidVerifySignature(success: false)
+            await notifyDidCompleteFetch(success: false, error: error)
+            throw error
+        }
 
         // Parse configuration
         let decoder = JSONDecoder()
@@ -142,6 +169,9 @@ actor ConfigStore {
         cachedLastModified = httpResponse.value(forHTTPHeaderField: "Last-Modified")
 
         try saveMetadata()
+
+        // Notify successful fetch completion
+        await notifyDidCompleteFetch(success: true, error: nil)
     }
 
     // MARK: - JWS Verification
@@ -235,15 +265,39 @@ actor ConfigStore {
         let configURL = cacheDirectory.appendingPathComponent(configFileName)
 
         guard fileManager.fileExists(atPath: configURL.path) else {
-            return
+            throw BuntingError.invalidConfiguration
         }
 
         let data = try Data(contentsOf: configURL)
         let decoder = JSONDecoder()
-        activeConfig = try decoder.decode(BuntingConfiguration.self, from: data)
+        let config = try decoder.decode(BuntingConfiguration.self, from: data)
+        activeConfig = config
 
         // Load metadata
         loadMetadata()
+
+        // Notify delegate
+        Task {
+            await notifyDidLoadCachedConfig(version: config.configVersion)
+        }
+    }
+
+    private func loadBundledSeed() throws {
+        // Look for BuntingConfig.json in the main bundle
+        guard let bundleURL = Bundle.main.url(forResource: "BuntingConfig", withExtension: "json")
+        else {
+            throw BuntingError.invalidConfiguration
+        }
+
+        let data = try Data(contentsOf: bundleURL)
+        let decoder = JSONDecoder()
+        let config = try decoder.decode(BuntingConfiguration.self, from: data)
+        activeConfig = config
+
+        // Notify delegate
+        Task {
+            await notifyDidLoadCachedConfig(version: config.configVersion)
+        }
     }
 
     private func saveToCache(_ data: Data, response: HTTPURLResponse) throws {
@@ -280,6 +334,32 @@ actor ConfigStore {
 
         let metadataURL = cacheDirectory.appendingPathComponent(metadataFileName)
         try data.write(to: metadataURL, options: .atomic)
+    }
+
+    // MARK: - Delegate Notifications
+
+    nonisolated private func notifyDidStartFetch(url: URL) async {
+        await MainActor.run { [eventsDelegate] in
+            eventsDelegate?.didStartFetch(url: url)
+        }
+    }
+
+    nonisolated private func notifyDidCompleteFetch(success: Bool, error: Error?) async {
+        await MainActor.run { [eventsDelegate] in
+            eventsDelegate?.didCompleteFetch(success: success, error: error)
+        }
+    }
+
+    nonisolated private func notifyDidVerifySignature(success: Bool) async {
+        await MainActor.run { [eventsDelegate] in
+            eventsDelegate?.didVerifySignature(success: success)
+        }
+    }
+
+    nonisolated private func notifyDidLoadCachedConfig(version: String) async {
+        await MainActor.run { [eventsDelegate] in
+            eventsDelegate?.didLoadCachedConfig(version: version)
+        }
     }
 }
 

@@ -59,60 +59,64 @@ extension BuntingCodegenPlugin {
         -> [Command]
     {
         // Try to find BuntingConfig.json (seed configuration)
-        // If not found, skip code generation gracefully
-        guard let configURL = try? findBuntingConfigJSON(in: rootDirectory) else {
-            // Print helpful message but don't fail the build
-            print("ℹ️  Bunting: BuntingConfig.json not found - skipping code generation")
-            print("   Run 'Bunting → Fetch Config' to enable strongly-typed flag accessors")
-            return []
+        let configURL = try? findBuntingConfigJSON(in: rootDirectory)
+
+        if configURL == nil {
+            // Config not found - generate a fallback file
+            print("ℹ️  Bunting: BuntingConfig.json not found - generating fallback accessors")
+            print(
+                "   Run 'swift package plugin fetch-config' to enable strongly-typed flag accessors"
+            )
         }
 
-        // Create the codegen command
+        // Always create the codegen command - it will handle missing config gracefully
         return [
             .buildCommand(
                 displayName: "Generating Bunting flag accessors",
                 executable: tool.url,
-                // Use URL.path property (not path()) for robust space handling
-                // The arguments array is quoted by Xcode's generated script.
                 arguments: [
-                    configURL.path,
+                    configURL?.path ?? "",  // Empty string signals "no config"
                     outputURL.path,
                 ],
-                inputFiles: [configURL],
+                inputFiles: configURL.map { [$0] } ?? [],
                 outputFiles: [outputURL]
             )
         ]
     }
 
     private func findBuntingConfigJSON(in directory: URL) throws -> URL {
+        let fileManager = FileManager.default
+
         // Check for config file in common locations
         let possiblePaths = [
             directory.appending(path: "BuntingConfig.json"),
             directory.appending(path: "Resources/BuntingConfig.json"),
             directory.appending(path: "Sources/BuntingConfig.json"),
+            // Also check in Example app directories (for development)
+            directory.appending(path: "Example/BuntingExample/BuntingConfig.json"),
+            directory.appending(path: "Example/BuntingConfig.json"),
         ]
 
-        // Also check in app targets (for Xcode projects with app structure)
-        let fileManager = FileManager.default
+        // Check predefined paths first (faster)
+        for url in possiblePaths {
+            if fileManager.fileExists(atPath: url.path) {
+                return url
+            }
+        }
+
+        // Also search in app targets (for Xcode projects with app structure)
         if let enumerator = fileManager.enumerator(
             at: directory, includingPropertiesForKeys: [.isDirectoryKey],
             options: [.skipsHiddenFiles, .skipsPackageDescendants])
         {
             for case let fileURL as URL in enumerator {
                 if fileURL.lastPathComponent == "BuntingConfig.json" {
-                    // Don't search too deep (max 3 levels)
+                    // Don't search too deep (max 4 levels to catch Example/BuntingExample/)
                     let depth = fileURL.pathComponents.count - directory.pathComponents.count
-                    if depth <= 3 {
+                    if depth <= 4 {
                         return fileURL
                     }
                 }
-            }
-        }
-
-        // Check predefined paths
-        for url in possiblePaths {
-            if fileManager.fileExists(atPath: url.path) {
-                return url
             }
         }
 

@@ -4,15 +4,35 @@ import Foundation
 public struct Variant: Codable, Sendable {
     public let type: VariantType
     public let order: Int
-    public let value: FlagValue
+    public let value: FlagValue?
+    public let values: [String: FlagValue]?  // For test variants: maps group name → flag value
     public let conditions: [Condition]?
     public let test: String?
     public let rollout: String?
+
+    public init(
+        type: VariantType,
+        order: Int,
+        value: FlagValue?,
+        values: [String: FlagValue]?,
+        conditions: [Condition]?,
+        test: String?,
+        rollout: String?
+    ) {
+        self.type = type
+        self.order = order
+        self.value = value
+        self.values = values
+        self.conditions = conditions
+        self.test = test
+        self.rollout = rollout
+    }
 
     enum CodingKeys: String, CodingKey {
         case type
         case order
         case value
+        case values
         case conditions
         case test
         case rollout

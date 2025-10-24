@@ -112,7 +112,7 @@ struct CodeGenerator {
         // Group flags by namespace
         let namespaces = groupByNamespace()
 
-        // Generate namespace extensions
+        // Generate namespace extensions (convenience sync accessors)
         for (namespace, flags) in namespaces.sorted(by: { $0.key < $1.key }) {
             if namespace.isEmpty {
                 // Root level flags
@@ -126,6 +126,44 @@ struct CodeGenerator {
         }
 
         output += "}\n"
+
+        // MARK: - Generated Flag Descriptors (BuntingPaths)
+        output += "\n\n// MARK: - Generated Flag Descriptors\n\n"
+        output += "extension BuntingPaths {\n\n"
+
+        // Root-level descriptors (no namespace)
+        if let rootFlags = namespaces[""] {
+            for (key, flag) in rootFlags.sorted(by: { $0.key < $1.key }) {
+                output += generateDescriptorProperty(key: key, flag: flag, indent: 1)
+            }
+        }
+
+        // Namespaced descriptors
+        for (namespace, flags) in namespaces.sorted(by: { $0.key < $1.key })
+        where namespace.isEmpty == false {
+            output += generateDescriptorNamespace(namespace, flags: flags)
+        }
+
+        // Add a flat list of all flags for easy UI rendering
+        output += "\n    public var allFlags: [FlagListItem] {\n"
+        output += "        [\n"
+
+        // Emit list entries for all flags
+        var first = true
+        for (namespace, flags) in namespaces.sorted(by: { $0.key < $1.key }) {
+            for (key, flag) in flags.sorted(by: { $0.key < $1.key }) {
+                let fullKey = namespace.isEmpty ? key : "\(namespace)/\(key)"
+                output += generateListItem(key: fullKey, flag: flag, isFirst: first)
+                first = false
+            }
+        }
+
+        output += "        ]\n"
+        output += "    }\n"
+
+        output += "}\n"
+
+        // FlagDescriptor type is provided by the Bunting library.
 
         return output
     }
@@ -157,11 +195,15 @@ struct CodeGenerator {
 
                 /// Namespace for '\(namespace)' flags
                 var \(namespaceName.prefix(1).lowercased() + namespaceName.dropFirst()): \(namespaceName)Namespace {
-                    \(namespaceName)Namespace(bunting: self)
+                    \(namespaceName)Namespace(self)
                 }
 
                 struct \(namespaceName)Namespace {
-                    let bunting: Bunting
+                    private let bunting: Bunting
+            
+                    init(_ bunting: Bunting) {
+                        self.bunting = bunting
+                    }
 
             """
 
@@ -173,6 +215,124 @@ struct CodeGenerator {
         output += "    }\n"
 
         return output
+    }
+
+    private func generateDescriptorNamespace(_ namespace: String, flags: [String: Flag]) -> String {
+        let namespaceName = camelCase(namespace.capitalized)
+
+        var output = """
+
+                /// Descriptor namespace for '\(namespace)' flags
+                var \(namespaceName.prefix(1).lowercased() + namespaceName.dropFirst()): \(namespaceName)Namespace {
+                    \(namespaceName)Namespace(bunting)
+                }
+
+                struct \(namespaceName)Namespace {
+                    private let bunting: Bunting
+            
+                    init(_ bunting: Bunting) {
+                        self.bunting = bunting
+                    }
+
+            """
+
+        for (key, flag) in flags.sorted(by: { $0.key < $1.key }) {
+            output += generateDescriptorProperty(
+                key: "\(namespace)/\(key)", flag: flag, indent: 2, propertyName: camelCase(key))
+        }
+
+        output += "    }\n"
+
+        return output
+    }
+
+    private func generateDescriptorProperty(
+        key: String,
+        flag: Flag,
+        indent: Int,
+        propertyName: String? = nil
+    ) -> String {
+        let indentStr = String(repeating: "    ", count: indent)
+        let (swiftType, defaultValue) = getTypeAndDefault(from: flag)
+        let name = propertyName ?? camelCase(key)
+
+        var output = "\n"
+        if let description = flag.description {
+            output += "\(indentStr)/// \(description)\n"
+        }
+        output += "\(indentStr)/// Flag key: `\(key)`\n"
+        output += "\(indentStr)var \(name): FlagDescriptor<\(swiftType)> {\n"
+        output +=
+            "\(indentStr)    FlagDescriptor(key: \"\(key)\", defaultValue: \(defaultValue)) { bunting in\n"
+
+        switch flag.type {
+        case "boolean", "bool":
+            output += "\(indentStr)        bunting.bool(\"\(key)\", default: \(defaultValue))\n"
+        case "string":
+            output += "\(indentStr)        bunting.string(\"\(key)\", default: \(defaultValue))\n"
+        case "integer", "int":
+            output += "\(indentStr)        bunting.int(\"\(key)\", default: \(defaultValue))\n"
+        case "double":
+            output += "\(indentStr)        bunting.double(\"\(key)\", default: \(defaultValue))\n"
+        case "date":
+            output += "\(indentStr)        bunting.date(\"\(key)\", default: \(defaultValue))\n"
+        case "json":
+            output += "\(indentStr)        bunting.jsonData(\"\(key)\")\n"
+        default:
+            output += "\(indentStr)        bunting.string(\"\(key)\", default: \"\")\n"
+        }
+
+        output += "\(indentStr)    }\n"
+        output += "\(indentStr)}\n"
+
+        return output
+    }
+
+    private func generateListItem(key: String, flag: Flag, isFirst: Bool) -> String {
+        let prefix = isFirst ? "            " : "            "
+        var body = "\(prefix)FlagListItem(key: \"\(key)\", type: \"\(flag.type)\") { bunting in\n"
+        switch flag.type {
+        case "boolean", "bool":
+            body += "                String(bunting.bool(\"\(key)\", default: \(getDefaultLiteral(flag))))\n"
+        case "string":
+            body += "                bunting.string(\"\(key)\", default: \(getDefaultLiteral(flag)))\n"
+        case "integer", "int":
+            body += "                String(bunting.int(\"\(key)\", default: \(getDefaultLiteral(flag))))\n"
+        case "double":
+            body += "                String(bunting.double(\"\(key)\", default: \(getDefaultLiteral(flag))))\n"
+        case "date":
+            body += "                ISO8601DateFormatter().string(from: bunting.date(\"\(key)\", default: Date()))\n"
+        case "json":
+            body += "                (bunting.jsonData(\"\(key)\").flatMap { String(data: $0, encoding: .utf8) } ?? \"<nil>\")\n"
+        default:
+            body += "                bunting.string(\"\(key)\", default: \"\")\n"
+        }
+        body += "            },\n"
+        return body
+    }
+
+    private func getDefaultLiteral(_ flag: Flag) -> String {
+        let def = flag.development.defaultValue
+        switch flag.type {
+        case "boolean", "bool":
+            if case .bool(let v) = def { return v ? "true" : "false" }
+            return "false"
+        case "string":
+            if case .string(let v) = def { return "\"\(v)\"" }
+            return "\"\""
+        case "integer", "int":
+            if case .int(let v) = def { return "\(v)" }
+            return "0"
+        case "double":
+            if case .double(let v) = def { return "\(v)" }
+            return "0.0"
+        case "date":
+            return "Date()"
+        case "json":
+            return "nil"
+        default:
+            return "\"\""
+        }
     }
 
     private func generateFlagAccessor(key: String, flag: Flag, indent: Int, fullKey: String? = nil)
@@ -280,6 +440,65 @@ struct CodeGenerator {
     }
 }
 
+// MARK: - Fallback Code Generation
+
+func generateFallbackCode() -> String {
+    return """
+        // Generated by Bunting Codegen (Fallback Mode)
+        // No configuration available - using minimal fallback implementation
+        //
+        // To enable strongly-typed flag accessors:
+        // 1. Run: swift package plugin fetch-config
+        //    OR place BuntingConfig.json in your project root
+        // 2. Rebuild your project
+        //
+        // You can still use string-based flag access:
+        //   let value = Bunting.shared.bool("my/flag", default: false)
+
+        import Foundation
+        import Bunting
+
+        // MARK: - Fallback Flag Accessors
+
+        extension Bunting {
+            // No flags available - add BuntingConfig.json to generate accessors
+        }
+
+        // MARK: - Fallback Flag Descriptors
+
+        /// Base paths structure for @BuntingFlag property wrapper
+        public struct BuntingPaths {
+            private let bunting: Bunting
+
+            public init(_ bunting: Bunting) {
+                self.bunting = bunting
+            }
+        }
+
+        extension BuntingPaths {
+            // No flag descriptors available
+            // Add BuntingConfig.json to your project and rebuild to generate strongly-typed accessors
+            //
+            // For now, use string-based flag access:
+            //   @State private var myFlag = Bunting.shared.bool("my/flag", default: false)
+        }
+
+        /// Descriptor for a single flag with type information
+        public struct FlagDescriptor<T> {
+            public let key: String
+            public let defaultValue: T
+            public let resolve: (Bunting) -> T
+
+            public init(key: String, defaultValue: T, resolve: @escaping (Bunting) -> T) {
+                self.key = key
+                self.defaultValue = defaultValue
+                self.resolve = resolve
+            }
+        }
+
+        """
+}
+
 // MARK: - Main
 
 func main() {
@@ -292,6 +511,22 @@ func main() {
 
     let configPath = arguments[1]
     let outputPath = arguments[2]
+
+    // Check if config path is empty (signal from plugin that config is missing)
+    if configPath.isEmpty {
+        // Generate fallback file
+        let fallbackCode = generateFallbackCode()
+        let outputURL = URL(fileURLWithPath: outputPath)
+        do {
+            try fallbackCode.write(to: outputURL, atomically: true, encoding: .utf8)
+            print("⚠️  Generated fallback accessors (no config available)")
+            print("   Add BuntingConfig.json and rebuild to enable strongly-typed flags")
+        } catch {
+            fputs("❌ Error writing fallback file: \(error.localizedDescription)\n", stderr)
+            exit(1)
+        }
+        exit(0)
+    }
 
     do {
         // Load config
@@ -311,14 +546,35 @@ func main() {
         print("   Processed \(config.flags.count) flags")
 
     } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
-        fputs("❌ Error: Could not open \(configPath) (No such file)\n", stderr)
-        fputs("   • Ensure BuntingConfig.json exists at that path\n", stderr)
-        fputs("   • If your project path contains spaces, Xcode will quote arguments automatically;\n", stderr)
-        fputs("     but verify the file isn’t missing or excluded by sandbox\n", stderr)
-        exit(1)
+        // Config file not found - generate fallback instead of failing
+        print("⚠️  Config file not found: \(configPath)")
+        print("   Generating fallback accessors to prevent build failure")
+
+        let fallbackCode = generateFallbackCode()
+        let outputURL = URL(fileURLWithPath: outputPath)
+        do {
+            try fallbackCode.write(to: outputURL, atomically: true, encoding: .utf8)
+            print("✅ Generated fallback accessors")
+            print("   Add BuntingConfig.json and rebuild to enable strongly-typed flags")
+        } catch {
+            fputs("❌ Error writing fallback file: \(error.localizedDescription)\n", stderr)
+            exit(1)
+        }
     } catch {
-        fputs("❌ Error: \(error.localizedDescription)\n", stderr)
-        exit(1)
+        // JSON decode error or other issue - generate fallback
+        print("⚠️  Error processing config: \(error.localizedDescription)")
+        print("   Generating fallback accessors to prevent build failure")
+
+        let fallbackCode = generateFallbackCode()
+        let outputURL = URL(fileURLWithPath: outputPath)
+        do {
+            try fallbackCode.write(to: outputURL, atomically: true, encoding: .utf8)
+            print("✅ Generated fallback accessors")
+            print("   Fix BuntingConfig.json and rebuild to enable strongly-typed flags")
+        } catch {
+            fputs("❌ Error writing fallback file: \(error.localizedDescription)\n", stderr)
+            exit(1)
+        }
     }
 }
 

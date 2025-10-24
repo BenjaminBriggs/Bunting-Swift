@@ -14,22 +14,9 @@
 		B55066F52EAB985600F8361C /* BuntingExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BuntingExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		B5C0A8D42EABABA000BF3583 /* Exceptions for "BuntingExample" folder in "BuntingExample" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				BuntingConfig.json,
-			);
-			target = B55066F42EAB985600F8361C /* BuntingExample */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		B55066F72EAB985600F8361C /* BuntingExample */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				B5C0A8D42EABABA000BF3583 /* Exceptions for "BuntingExample" folder in "BuntingExample" target */,
-			);
 			path = BuntingExample;
 			sourceTree = "<group>";
 		};
@@ -77,7 +64,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				B5C0A8D62EABAC3E00BF3583 /* PBXTargetDependency */,
+				B52FB2812EAC06BA000DE5F4 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				B55066F72EAB985600F8361C /* BuntingExample */,
@@ -148,9 +135,9 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		B5C0A8D62EABAC3E00BF3583 /* PBXTargetDependency */ = {
+		B52FB2812EAC06BA000DE5F4 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			productRef = B5C0A8D52EABAC3E00BF3583 /* BuntingCodegenPlugin */;
+			productRef = B52FB2802EAC06BA000DE5F4 /* BuntingCodegenPlugin */;
 		};
 /* End PBXTargetDependency section */
 
@@ -390,7 +377,7 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		B5C0A8D52EABAC3E00BF3583 /* BuntingCodegenPlugin */ = {
+		B52FB2802EAC06BA000DE5F4 /* BuntingCodegenPlugin */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = B5C9EAC12EAB989300CD1B4D /* XCLocalSwiftPackageReference "../../bunting-sdk-swift" */;
 			productName = "plugin:BuntingCodegenPlugin";

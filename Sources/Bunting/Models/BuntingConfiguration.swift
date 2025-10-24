@@ -22,6 +22,26 @@ public struct BuntingConfiguration: Codable, Sendable {
         case rollouts
     }
 
+    public init(
+        schemaVersion: Int,
+        configVersion: String,
+        publishedAt: Date,
+        appIdentifier: String,
+        flags: [String: Flag],
+        cohorts: [String: Cohort],
+        tests: [String: Test],
+        rollouts: [String: Rollout]
+    ) {
+        self.schemaVersion = schemaVersion
+        self.configVersion = configVersion
+        self.publishedAt = publishedAt
+        self.appIdentifier = appIdentifier
+        self.flags = flags
+        self.cohorts = cohorts
+        self.tests = tests
+        self.rollouts = rollouts
+    }
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 

@@ -9,6 +9,15 @@ import Bunting
 import SwiftUI
 
 struct ContentView: View {
+    @BuntingFlag(\.store.useNewPaywallDesign)
+    private var typedUseNewDesign: Bool
+    
+    @BuntingFlag(\.features.maxItems)
+    private var typedMaxItems: Int
+    
+    @BuntingFlag(\.ui.themeColor)
+    private var typedThemeColor: String
+
     // MARK: - State Properties
     // These properties hold the current values of our feature flags
     // They're updated when the view appears and when we manually refresh
@@ -30,10 +39,31 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             List {
-                // MARK: - Feature Flags Section
-                // This section demonstrates reading different flag types
-
                 Section {
+                     HStack {
+                         Text("Typed: New Paywall Design")
+                         Spacer()
+                         Image(
+                             systemName: typedUseNewDesign
+                                 ? "checkmark.circle.fill" : "xmark.circle.fill"
+                         )
+                         .foregroundStyle(typedUseNewDesign ? .green : .red)
+                     }
+                    
+                     HStack {
+                         Text("Typed: Max Items")
+                         Spacer()
+                         Text("\(typedMaxItems)")
+                             .foregroundStyle(.secondary)
+                     }
+                    
+                     HStack {
+                         Text("Typed: Theme Color")
+                         Spacer()
+                         Text(typedThemeColor)
+                             .foregroundStyle(.secondary)
+                     }
+
                     // Boolean flag example
                     // Shows a checkmark or X mark based on the flag value
                     HStack {
@@ -99,6 +129,22 @@ struct ContentView: View {
                 // Shows metadata about the current configuration
 
                 Section {
+                    // Show all flags and their current values using generated list
+                    let all = BuntingPaths(bunting: Bunting.shared).allFlags
+                    ForEach(all, id: \.key) { item in
+                        HStack {
+                            Text(item.key)
+                            Spacer()
+                            Text(item.makeString(Bunting.shared))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+                } header: {
+                    Text("All Flags (current values)")
+                }
+
+                Section {
                     if let version = configVersion {
                         LabeledContent("Config Version", value: version)
                     } else {
@@ -159,10 +205,13 @@ struct ContentView: View {
                     }
                     .disabled(isRefreshing)
 
-                    // Navigate to debug panel
-                    // Provides advanced testing and override capabilities
-                    NavigationLink("Debug Panel") {
-                        DebugView()
+                    // Navigate to debug panels
+                    NavigationLink("Info View") {
+                        BuntingInfoView()
+                    }
+
+                    NavigationLink("Debug View") {
+                        BuntingDebugView()
                     }
                 } header: {
                     Text("Actions")

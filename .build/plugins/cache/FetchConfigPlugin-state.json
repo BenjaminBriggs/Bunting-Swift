@@ -41,7 +41,7 @@
     "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/plugins/cache/FetchConfigPlugin"
   ],
   "environment" : {
-    "ALACRITTY_WINDOW_ID" : "12884901947",
+    "ALACRITTY_WINDOW_ID" : "4294967333",
     "AUTOJUMP_ERROR_PATH" : "/Users/ben/Library/autojump/errors.log",
     "AUTOJUMP_SOURCED" : "1",
     "COLORTERM" : "truecolor",
@@ -60,15 +60,15 @@
     "MANPATH" : "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk/usr/share/man:/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/usr/share/man:/Applications/Xcode-beta.app/Contents/Developer/usr/share/man:/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/share/man:",
     "OLDPWD" : "/Users/ben/Local Projects/Bunting",
     "OSLogRateLimit" : "64",
-    "PAGER" : "",
-    "PATH" : "/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pmk/env/global/bin:/Library/Apple/usr/bin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/ben/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Users/ben/.cargo/bin",
+    "PAGER" : "less",
+    "PATH" : "/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pmk/env/global/bin:/Library/Apple/usr/bin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/ben/.local/bin:/Users/ben/.cargo/bin",
     "PWD" : "/Users/ben/Local Projects/Bunting/bunting-sdk-swift",
     "SDKROOT" : "/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.1.sdk",
     "SHELL" : "/bin/zsh",
-    "SHLVL" : "2",
+    "SHLVL" : "1",
     "TMPDIR" : "/var/folders/bk/d2qbm89x06ng6q83wnpj04_00000gn/T/",
     "USER" : "ben",
-    "WINDOWID" : "12884901947",
+    "WINDOWID" : "4294967333",
     "XPC_FLAGS" : "0x0",
     "XPC_SERVICE_NAME" : "0",
     "ZED_TERM" : "true",
@@ -77,7 +77,7 @@
     "__CFBundleIdentifier" : "dev.zed.Zed",
     "__CF_USER_TEXT_ENCODING" : "0x1F5:0:2"
   },
-  "inputHash" : "4e5ea616fe23a4a46f92e7b5c6fcb79bb9010f202814767566912fbcb7fea557",
+  "inputHash" : "5480ea26d0da6b302309b5a49947ec8899e1326386565d99ae9708d0394c9c94",
   "output" : "",
   "result" : {
     "exit" : {
