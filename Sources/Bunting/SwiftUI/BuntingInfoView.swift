@@ -155,7 +155,15 @@ public struct BuntingInfoView: View {
                     if let nsFlags = groupedFlags[namespace] {
                         Section {
                             ForEach(nsFlags) { flag in
-                                FlagInfoRow(flag: flag, hasOverride: overrides[flag.key] != nil)
+                                FlagRowView(
+                                    key: flag.key,
+                                    displayName: flag.displayName,
+                                    type: flag.type,
+                                    effectiveValue: flag.effectiveValue,
+                                    defaultValue: flag.defaultValue,
+                                    mode: .info,
+                                    hasOverride: overrides[flag.key] != nil
+                                )
                             }
                         } header: {
                             Text(
@@ -315,68 +323,7 @@ private struct FlagInfo: Identifiable {
     }
 }
 
-// MARK: - Flag Info Row
-
-@available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *)
-private struct FlagInfoRow: View {
-    let flag: FlagInfo
-    let hasOverride: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Header
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(flag.displayName)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    Text(flag.key)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                // Type and override badges
-                HStack(spacing: 4) {
-                    // Override badge
-                    if hasOverride {
-                        Text("Override")
-                            .font(.caption2)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.orange.opacity(0.2))
-                            .foregroundStyle(.orange)
-                            .clipShape(Capsule())
-                    }
-
-                    // Type badge
-                    Text(flag.type.rawValue)
-                        .font(.caption2)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.blue.opacity(0.2))
-                        .foregroundStyle(.blue)
-                        .clipShape(Capsule())
-                }
-            }
-
-            // Current value
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Value")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(flag.effectiveValue)
-                    .font(.system(.body, design: .monospaced))
-                    .padding(8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.secondary.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-            }
-        }
-        .padding(.vertical, 4)
-    }
-}
+// unified row view now provided by FlagRowView
 
 #Preview {
     NavigationStack {

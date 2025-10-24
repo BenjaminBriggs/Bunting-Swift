@@ -163,12 +163,19 @@ public struct BuntingDebugView: View {
                         Section {
                             ForEach(nsFlags) { flag in
                                 FlagRowView(
-                                    flag: flag,
-                                    override: overrides[flag.key],
-                                    onOverrideChange: { value in
+                                    key: flag.key,
+                                    displayName: flag.displayName,
+                                    type: flag.type,
+                                    effectiveValue: flag.effectiveValue,
+                                    defaultValue: flag.defaultValue,
+                                    mode: .debug,
+                                    hasOverride: overrides[flag.key] != nil,
+                                    sourceBadgeTitle: flag.source.displayName,
+                                    sourceBadgeColor: flag.source.color,
+                                    onSetOverride: { value in
                                         setOverride(key: flag.key, value: value)
                                     },
-                                    onOverrideClear: {
+                                    onClearOverride: {
                                         clearOverride(key: flag.key)
                                     }
                                 )
@@ -407,207 +414,8 @@ private enum FlagSource {
     var color: Color {
         switch self {
         case .override: return .orange
-        case .evaluated: return .blue
+        case .evaluated: return .green
         }
-    }
-}
-
-// MARK: - Flag Row View
-
-@available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *)
-private struct FlagRowView: View {
-    let flag: FlagInfo
-    let override: OverrideValue?
-    let onOverrideChange: (Any?) -> Void
-    let onOverrideClear: () -> Void
-
-    @State private var isEditingOverride = false
-
-    // Temporary edit values
-    @State private var boolValue: Bool = false
-    @State private var stringValue: String = ""
-    @State private var intValue: Int = 0
-    @State private var doubleValue: Double = 0.0
-    @State private var dateValue: Date = Date()
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Header
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(flag.displayName)
-                        .font(.headline)
-                    Text(flag.key)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                // Source badge
-                Text(flag.source.displayName)
-                    .font(.caption2)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(flag.source.color.opacity(0.2))
-                    .foregroundStyle(flag.source.color)
-                    .clipShape(Capsule())
-            }
-
-            // Current effective value
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Current Value")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(flag.effectiveValue)
-                    .font(.system(.body, design: .monospaced))
-                    .padding(8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.secondary.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-            }
-
-            // Override controls
-            if override != nil {
-                // Has override - show clear button
-                Button(role: .destructive) {
-                    onOverrideClear()
-                } label: {
-                    Label("Clear Override", systemImage: "xmark.circle.fill")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-            } else if isEditingOverride {
-                // Editing new override
-                VStack(spacing: 8) {
-                    overrideEditor
-
-                    HStack {
-                        Button("Cancel") {
-                            isEditingOverride = false
-                        }
-                        .buttonStyle(.bordered)
-
-                        Spacer()
-
-                        Button("Set Override") {
-                            saveOverride()
-                            isEditingOverride = false
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-                }
-                .padding(8)
-                .background(Color.secondary.opacity(0.05))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-            } else {
-                // No override - show add button
-                Button {
-                    initializeEditorValues()
-                    isEditingOverride = true
-                } label: {
-                    Label("Add Override", systemImage: "plus.circle.fill")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-            }
-        }
-        .padding(.vertical, 8)
-    }
-
-    @ViewBuilder
-    private var overrideEditor: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Override Value")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            switch flag.type {
-            case .boolean:
-                Toggle("Enabled", isOn: $boolValue)
-
-            case .string:
-                TextField("String value", text: $stringValue)
-                    .textFieldStyle(.roundedBorder)
-
-            case .integer:
-                Stepper(value: $intValue, in: -1000...1000) {
-                    HStack {
-                        Text("Integer")
-                        Spacer()
-                        Text("\(intValue)")
-                            .monospacedDigit()
-                    }
-                }
-
-            case .double:
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Double: \(String(format: "%.2f", doubleValue))")
-                        .monospacedDigit()
-                    Slider(value: $doubleValue, in: 0...100)
-                }
-
-            case .date:
-                DatePicker(
-                    "Date", selection: $dateValue, displayedComponents: [.date, .hourAndMinute]
-                )
-                .datePickerStyle(.compact)
-
-            case .json:
-                TextEditor(text: $stringValue)
-                    .frame(height: 100)
-                    .font(.system(.caption, design: .monospaced))
-                    .padding(4)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                    )
-            }
-        }
-    }
-
-    private func initializeEditorValues() {
-        // Parse the default value to initialize editor
-        let defaultStr = flag.defaultValue
-
-        switch flag.type {
-        case .boolean:
-            boolValue = defaultStr == "true"
-        case .string:
-            stringValue = defaultStr.trimmingCharacters(in: CharacterSet(charactersIn: "\""))
-        case .integer:
-            intValue = Int(defaultStr) ?? 0
-        case .double:
-            doubleValue = Double(defaultStr) ?? 0.0
-        case .date:
-            if let date = ISO8601DateFormatter().date(from: defaultStr) {
-                dateValue = date
-            }
-        case .json:
-            stringValue = defaultStr
-        }
-    }
-
-    private func saveOverride() {
-        let value: Any?
-
-        switch flag.type {
-        case .boolean:
-            value = boolValue
-        case .string:
-            value = stringValue
-        case .integer:
-            value = intValue
-        case .double:
-            value = doubleValue
-        case .date:
-            value = dateValue
-        case .json:
-            value = stringValue
-        }
-
-        onOverrideChange(value)
     }
 }
 
