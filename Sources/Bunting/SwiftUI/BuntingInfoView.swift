@@ -150,8 +150,6 @@ public struct BuntingInfoView: View {
                 Text("The local ID is stored in the keychain and used for deterministic bucketing.")
             }
 
-            // MARK: - Flags Section
-
             if !flags.isEmpty {
                 ForEach(groupedFlags.keys.sorted(), id: \.self) { namespace in
                     if let nsFlags = groupedFlags[namespace] {

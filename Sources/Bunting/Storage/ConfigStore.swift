@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import OSLog
 
 /// Manages configuration fetching, verification, and caching
 actor ConfigStore {
@@ -55,7 +56,11 @@ actor ConfigStore {
         }
 
         // Fallback to bundled seed
-        try? loadBundledSeed()
+        do {
+            try loadBundledSeed()
+        } catch {
+            BuntingLog.config.notice("No bundled seed loaded: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     // MARK: - Public API
@@ -265,6 +270,7 @@ actor ConfigStore {
         let configURL = cacheDirectory.appendingPathComponent(configFileName)
 
         guard fileManager.fileExists(atPath: configURL.path) else {
+            BuntingLog.config.notice("Cached config not found at path: \(configURL.path, privacy: .private)")
             throw BuntingError.invalidConfiguration
         }
 
@@ -280,23 +286,34 @@ actor ConfigStore {
         Task {
             await notifyDidLoadCachedConfig(version: config.configVersion)
         }
+
+        BuntingLog.config.info("Loaded cached config version: \(config.configVersion, privacy: .public)")
     }
 
     private func loadBundledSeed() throws {
         // Look for BuntingConfig.json in the main bundle
         guard let bundleURL = Bundle.main.url(forResource: "BuntingConfig", withExtension: "json")
         else {
+            BuntingLog.config.notice("No bundled BuntingConfig.json found in main bundle")
             throw BuntingError.invalidConfiguration
         }
 
-        let data = try Data(contentsOf: bundleURL)
-        let decoder = JSONDecoder()
-        let config = try decoder.decode(BuntingConfiguration.self, from: data)
-        activeConfig = config
+        do {
+            BuntingLog.config.info("Found bundled BuntingConfig.json at: \(bundleURL.path, privacy: .private)")
+            let data = try Data(contentsOf: bundleURL)
+            let decoder = JSONDecoder()
+            let config = try decoder.decode(BuntingConfiguration.self, from: data)
+            activeConfig = config
 
-        // Notify delegate
-        Task {
-            await notifyDidLoadCachedConfig(version: config.configVersion)
+            // Notify delegate
+            Task {
+                await notifyDidLoadCachedConfig(version: config.configVersion)
+            }
+
+            BuntingLog.config.info("Loaded bundled seed config version: \(config.configVersion, privacy: .public)")
+        } catch {
+            BuntingLog.config.error("Failed to decode bundled BuntingConfig.json: \(error.localizedDescription, privacy: .public)")
+            throw error
         }
     }
 

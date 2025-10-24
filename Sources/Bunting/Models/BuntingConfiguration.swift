@@ -1,7 +1,7 @@
 import Foundation
 
 /// The root configuration object containing all flags, cohorts, tests, and rollouts
-public struct BuntingConfiguration: Codable, Sendable {
+public struct BuntingConfiguration: Decodable, Sendable {
     public let schemaVersion: Int
     public let configVersion: String
     public let publishedAt: Date
@@ -20,26 +20,6 @@ public struct BuntingConfiguration: Codable, Sendable {
         case flags
         case tests
         case rollouts
-    }
-
-    public init(
-        schemaVersion: Int,
-        configVersion: String,
-        publishedAt: Date,
-        appIdentifier: String,
-        flags: [String: Flag],
-        cohorts: [String: Cohort],
-        tests: [String: Test],
-        rollouts: [String: Rollout]
-    ) {
-        self.schemaVersion = schemaVersion
-        self.configVersion = configVersion
-        self.publishedAt = publishedAt
-        self.appIdentifier = appIdentifier
-        self.flags = flags
-        self.cohorts = cohorts
-        self.tests = tests
-        self.rollouts = rollouts
     }
 
     public init(from decoder: Decoder) throws {
