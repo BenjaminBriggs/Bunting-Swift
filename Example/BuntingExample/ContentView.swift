@@ -129,22 +129,6 @@ struct ContentView: View {
                 // Shows metadata about the current configuration
 
                 Section {
-                    // Show all flags and their current values using generated list
-                    let all = BuntingPaths(bunting: Bunting.shared).allFlags
-                    ForEach(all, id: \.key) { item in
-                        HStack {
-                            Text(item.key)
-                            Spacer()
-                            Text(item.makeString(Bunting.shared))
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                        }
-                    }
-                } header: {
-                    Text("All Flags (current values)")
-                }
-
-                Section {
                     if let version = configVersion {
                         LabeledContent("Config Version", value: version)
                     } else {

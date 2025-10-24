@@ -43,114 +43,15 @@ public struct BuntingInfoView: View {
     // Flag data
     @State private var flags: [FlagInfo] = []
     @State private var overrides: [String: OverrideValue] = [:]
+    @State private var searchText: String = ""
 
     // MARK: - Body
 
+    @State private var showingDetails = false
+
     public var body: some View {
         List {
-            // MARK: - Environment Section
-
-            Section {
-                LabeledContent("Environment", value: environment)
-            } header: {
-                Text("Configuration")
-            }
-
-            // MARK: - Status Section
-
-            Section {
-                // Config version
-                if let version = configVersion {
-                    LabeledContent("Version", value: version)
-                } else {
-                    HStack {
-                        Text("Version")
-                        Spacer()
-                        Text("Not loaded")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                // Publication date
-                if let published = publishedAt {
-                    LabeledContent("Published") {
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text(published, style: .relative)
-                            Text(published, style: .date)
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-
-                // Signature verification status
-                LabeledContent("Signature") {
-                    HStack {
-                        if signatureVerified {
-                            Image(systemName: "checkmark.seal.fill")
-                                .foregroundStyle(.green)
-                            Text("Verified")
-                        } else {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.orange)
-                            Text("Not Verified")
-                        }
-                    }
-                    .font(.subheadline)
-                }
-            } header: {
-                Text("Status")
-            }
-
-            // MARK: - Network Section
-
-            Section {
-                // Last fetch time
-                if let lastFetch = lastFetchTime {
-                    LabeledContent("Last Fetch") {
-                        Text(lastFetch, style: .relative)
-                    }
-                } else {
-                    HStack {
-                        Text("Last Fetch")
-                        Spacer()
-                        Text("Never")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                // ETag
-                if let etag = etag {
-                    LabeledContent("ETag") {
-                        Text(etag)
-                            .font(.system(.caption, design: .monospaced))
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                    }
-                }
-            } header: {
-                Text("Network")
-            } footer: {
-                Text("ETag is used for efficient caching with conditional GET requests.")
-            }
-
-            // MARK: - Identity Section
-
-            Section {
-                LabeledContent("Local ID") {
-                    Text(localID)
-                        .font(.system(.caption, design: .monospaced))
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .textSelection(.enabled)
-                }
-            } header: {
-                Text("Device Identity")
-            } footer: {
-                Text("The local ID is stored in the keychain and used for deterministic bucketing.")
-            }
-
-            if !flags.isEmpty {
+            if !filteredFlags.isEmpty {
                 ForEach(groupedFlags.keys.sorted(), id: \.self) { namespace in
                     if let nsFlags = groupedFlags[namespace] {
                         Section {
@@ -180,6 +81,33 @@ public struct BuntingInfoView: View {
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
         #endif
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showingDetails = true
+                } label: {
+                    Label("Details", systemImage: "info.circle")
+                }
+            }
+        }
+        .sheet(isPresented: $showingDetails) {
+            BuntingDetailsSheet(
+                environment: environment,
+                configVersion: configVersion,
+                publishedAt: publishedAt,
+                signatureVerified: signatureVerified,
+                localID: localID,
+                lastFetchTime: lastFetchTime,
+                etag: etag,
+                showResetIdentity: false,
+                onResetIdentity: nil,
+                onRefresh: {
+                    await loadInfo()
+                }
+            )
+            .presentationDetents([.medium, .large])
+        }
+        .searchable(text: $searchText, placement: .navigationBarDrawer, prompt: "Search flags")
         .task {
             await loadInfo()
         }
@@ -190,8 +118,15 @@ public struct BuntingInfoView: View {
 
     // MARK: - Computed Properties
 
+    private var filteredFlags: [FlagInfo] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard query.isEmpty == false else { return flags }
+        let q = query.lowercased()
+        return flags.filter { $0.displayName.lowercased().contains(q) }
+    }
+
     private var groupedFlags: [String: [FlagInfo]] {
-        Dictionary(grouping: flags) { flag in
+        Dictionary(grouping: filteredFlags) { flag in
             if let slashIndex = flag.key.lastIndex(of: "/") {
                 return String(flag.key[..<slashIndex])
             }

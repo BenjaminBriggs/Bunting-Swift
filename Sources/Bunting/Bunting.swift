@@ -30,6 +30,7 @@ public final class Bunting {
     @ObservationIgnored private var context: EvaluationContext
     @ObservationIgnored private var customAttributeResolver:
         EvaluationContext.CustomAttributeResolver
+    @ObservationIgnored private var transientLocalID: UUID?
 
     // MARK: - Events Delegate
 
@@ -53,7 +54,13 @@ public final class Bunting {
     public var configVersion: String? { configuration?.configVersion }
     public var publishedAt: Date? { configuration?.publishedAt }
     public var signatureVerified: Bool { configuration != nil }
-    public var localID: UUID { cachedLocalID ?? UUID() }
+    public var localID: UUID {
+        if let id = cachedLocalID { return id }
+        if let t = transientLocalID { return t }
+        let temp = UUID()
+        transientLocalID = temp
+        return temp
+    }
 
     // MARK: - Initialization
     private init(
@@ -88,7 +95,14 @@ public final class Bunting {
                 self.configuration = config
                 self.overridesSnapshot = overrides
                 self.cachedLocalID = id
+                self.transientLocalID = nil
             }
+
+            #if DEBUG
+            if id == nil {
+                assertionFailure("Bunting: Failed to read/write Local ID from Keychain. Ensure the app can access Keychain (entitlements, sandbox).")
+            }
+            #endif
 
             // Trigger an initial refresh (rate-limited by store)
             try? await self.configStore.refresh()
@@ -325,7 +339,10 @@ public final class Bunting {
     public func resetIdentity() async throws {
         try await identity.resetIdentity()
         let id = try? await identity.getLocalID()
-        await MainActor.run { self.cachedLocalID = id }
+        await MainActor.run {
+            self.cachedLocalID = id
+            self.transientLocalID = nil
+        }
     }
 }
 

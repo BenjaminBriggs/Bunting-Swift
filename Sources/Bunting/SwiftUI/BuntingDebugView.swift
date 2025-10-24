@@ -42,119 +42,19 @@ public struct BuntingDebugView: View {
     @State private var environment: String = ""
 
     @State private var isRefreshing = false
-    @State private var showResetConfirmation = false
     @State private var showClearOverridesConfirmation = false
 
     // Flag data
     @State private var flags: [FlagInfo] = []
     @State private var overrides: [String: OverrideValue] = [:]
+    @State private var searchText: String = ""
 
     // MARK: - Body
 
+    @State private var showingDetails = false
+
     public var body: some View {
         List {
-            // MARK: - Configuration Section
-
-            Section {
-                LabeledContent("Environment", value: environment)
-
-                if let version = configVersion {
-                    LabeledContent("Version", value: version)
-                } else {
-                    HStack {
-                        Text("Version")
-                        Spacer()
-                        Text("Not loaded")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                if let published = publishedAt {
-                    LabeledContent("Published") {
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text(published, style: .relative)
-                            Text(published, style: .date)
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-
-                LabeledContent("Signature") {
-                    HStack {
-                        if signatureVerified {
-                            Image(systemName: "checkmark.seal.fill")
-                                .foregroundStyle(.green)
-                            Text("Verified")
-                        } else {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.orange)
-                            Text("Not Verified")
-                        }
-                    }
-                    .font(.subheadline)
-                }
-
-                // Manual refresh button
-                Button {
-                    Task {
-                        await refreshConfig()
-                    }
-                } label: {
-                    HStack {
-                        Label("Refresh Configuration", systemImage: "arrow.clockwise")
-                        if isRefreshing {
-                            Spacer()
-                            ProgressView()
-                                .controlSize(.small)
-                        }
-                    }
-                }
-                .disabled(isRefreshing)
-            } header: {
-                Text("Configuration")
-            } footer: {
-                Text("Configuration is fetched from the backend and verified with JWS signature.")
-            }
-
-            // MARK: - Identity Section
-
-            Section {
-                LabeledContent("Local ID") {
-                    Text(localID)
-                        .font(.system(.caption, design: .monospaced))
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .textSelection(.enabled)
-                }
-
-                Button(role: .destructive) {
-                    showResetConfirmation = true
-                } label: {
-                    Label("Reset Identity", systemImage: "arrow.clockwise")
-                }
-                .confirmationDialog(
-                    "Reset Identity?",
-                    isPresented: $showResetConfirmation,
-                    titleVisibility: .visible
-                ) {
-                    Button("Reset", role: .destructive) {
-                        Task {
-                            await resetIdentity()
-                        }
-                    }
-                    Button("Cancel", role: .cancel) {}
-                } message: {
-                    Text(
-                        "This will generate a new UUID and may change cohort assignments and rollout buckets."
-                    )
-                }
-            } header: {
-                Text("Device Identity")
-            } footer: {
-                Text("The local ID is used for deterministic bucketing in tests and rollouts.")
-            }
-
             // MARK: - Flags Section
 
             if !flags.isEmpty {
@@ -191,38 +91,60 @@ public struct BuntingDebugView: View {
                 }
             }
 
-            // MARK: - Actions Section
-
-            if !overrides.isEmpty {
-                Section {
-                    Button(role: .destructive) {
-                        showClearOverridesConfirmation = true
-                    } label: {
-                        Label("Clear All Overrides (\(overrides.count))", systemImage: "trash")
-                    }
-                    .confirmationDialog(
-                        "Clear All Overrides?",
-                        isPresented: $showClearOverridesConfirmation,
-                        titleVisibility: .visible
-                    ) {
-                        Button("Clear All", role: .destructive) {
-                            clearAllOverrides()
-                        }
-                        Button("Cancel", role: .cancel) {}
-                    } message: {
-                        Text(
-                            "This will remove all \(overrides.count) local override(s) and restore backend values."
-                        )
-                    }
-                } header: {
-                    Text("Actions")
-                }
-            }
         }
         .navigationTitle("Bunting Debug")
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
         #endif
+        .toolbar {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                if overrides.isEmpty == false {
+                    Button {
+                        showClearOverridesConfirmation = true
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                    .confirmationDialog(
+                        "Clear \(overrides.count) Overrides?",
+                        isPresented: $showClearOverridesConfirmation,
+                        titleVisibility: .visible
+                    ) {
+                        Button("Clear All", role: .destructive) { clearAllOverrides() }
+                        Button("Cancel", role: .cancel) {}
+                    } message: {
+                        Text("This will remove all \(overrides.count) local override(s) and restore backend values.")
+                    }
+                }
+            }
+             
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+                Button {
+                    showingDetails = true
+                } label: {
+                    Image(systemName: "info.circle")
+                }
+            }
+        }
+        .sheet(isPresented: $showingDetails) {
+            BuntingDetailsSheet(
+                environment: environment,
+                configVersion: configVersion,
+                publishedAt: publishedAt,
+                signatureVerified: signatureVerified,
+                localID: localID,
+                lastFetchTime: nil,
+                etag: nil,
+                showResetIdentity: true,
+                onResetIdentity: {
+                    Task { await resetIdentity() }
+                },
+                onRefresh: {
+                    await refreshConfig()
+                }
+            )
+            .presentationDetents([.medium, .large])
+        }
+        .searchable(text: $searchText, placement: .navigationBarDrawer, prompt: "Search flags")
         .task {
             await loadDebugInfo()
         }
@@ -233,8 +155,15 @@ public struct BuntingDebugView: View {
 
     // MARK: - Computed Properties
 
+    private var filteredFlags: [FlagInfo] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard query.isEmpty == false else { return flags }
+        let q = query.lowercased()
+        return flags.filter { $0.displayName.lowercased().contains(q) }
+    }
+
     private var groupedFlags: [String: [FlagInfo]] {
-        Dictionary(grouping: flags) { flag in
+        Dictionary(grouping: filteredFlags) { flag in
             if let slashIndex = flag.key.lastIndex(of: "/") {
                 return String(flag.key[..<slashIndex])
             }

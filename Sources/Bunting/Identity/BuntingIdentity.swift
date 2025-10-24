@@ -1,5 +1,6 @@
 import Foundation
 import Security
+import OSLog
 
 /// Manages the persistent local identity for deterministic bucketing
 actor BuntingIdentity {
@@ -88,7 +89,7 @@ actor BuntingIdentity {
             query[kSecAttrAccessGroup as String] = accessGroup
         }
 
-        let attributes: [String: Any] = [
+        var attributes: [String: Any] = [
             kSecValueData as String: data
         ]
 
@@ -98,13 +99,23 @@ actor BuntingIdentity {
         if status == errSecItemNotFound {
             var addQuery = query
             addQuery[kSecValueData as String] = data
-            addQuery[kSecAttrSynchronizable as String] = true  // Enable iCloud Keychain sync
+            #if os(iOS) || os(tvOS) || os(watchOS)
             addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+            #endif
 
             status = SecItemAdd(addQuery as CFDictionary, nil)
+
+            // If missing entitlement or unsupported attribute caused failure, log and retry with minimal attributes
+            if status != errSecSuccess {
+                BuntingLog.core.error("Keychain add failed (status: \(status), privacy: .public). Retrying with minimal attributes.")
+                var minimal = query
+                minimal[kSecValueData as String] = data
+                status = SecItemAdd(minimal as CFDictionary, nil)
+            }
         }
 
         guard status == errSecSuccess else {
+            BuntingLog.core.error("Keychain write failed with status: \(status), privacy: .public")
             throw BuntingError.keychainError(status: status)
         }
     }
