@@ -1,0 +1,138 @@
+{
+  "configVersion": "2025-01-15.1",
+  "publishedAt": "2025-01-15T10:00:00Z",
+  "flags": {
+    "store/use_new_paywall_design": {
+      "type": "bool",
+      "description": "Enable the new paywall design",
+      "development": {
+        "defaultValue": false
+      },
+      "staging": {
+        "defaultValue": true
+      },
+      "production": {
+        "defaultValue": false
+      }
+    },
+    "store/subscription_discount": {
+      "type": "int",
+      "description": "Percentage discount for subscriptions",
+      "development": {
+        "defaultValue": 20
+      },
+      "staging": {
+        "defaultValue": 15
+      },
+      "production": {
+        "defaultValue": 10
+      }
+    },
+    "store/price_multiplier": {
+      "type": "double",
+      "description": "Price multiplier for regional pricing",
+      "development": {
+        "defaultValue": 1.0
+      },
+      "staging": {
+        "defaultValue": 1.0
+      },
+      "production": {
+        "defaultValue": 1.0
+      }
+    },
+    "store/promo_banner_text": {
+      "type": "string",
+      "description": "Promotional banner text",
+      "development": {
+        "defaultValue": "50% Off - Limited Time!"
+      },
+      "staging": {
+        "defaultValue": "Special Offer - Save Now"
+      },
+      "production": {
+        "defaultValue": "Upgrade Today"
+      }
+    },
+    "store/promo_end_date": {
+      "type": "date",
+      "description": "End date for current promotion",
+      "development": {
+        "defaultValue": "2025-12-31T23:59:59Z"
+      },
+      "staging": {
+        "defaultValue": "2025-12-31T23:59:59Z"
+      },
+      "production": {
+        "defaultValue": "2025-06-30T23:59:59Z"
+      }
+    },
+    "ui/theme_color": {
+      "type": "string",
+      "description": "Primary theme color (hex)",
+      "development": {
+        "defaultValue": "#007AFF"
+      },
+      "staging": {
+        "defaultValue": "#007AFF"
+      },
+      "production": {
+        "defaultValue": "#007AFF"
+      }
+    },
+    "ui/enable_animations": {
+      "type": "bool",
+      "description": "Enable UI animations",
+      "development": {
+        "defaultValue": true
+      },
+      "staging": {
+        "defaultValue": true
+      },
+      "production": {
+        "defaultValue": true
+      }
+    },
+    "features/show_onboarding": {
+      "type": "bool",
+      "description": "Show onboarding flow to new users",
+      "development": {
+        "defaultValue": true
+      },
+      "staging": {
+        "defaultValue": true
+      },
+      "production": {
+        "defaultValue": true
+      }
+    },
+    "features/max_items": {
+      "type": "int",
+      "description": "Maximum items per page",
+      "development": {
+        "defaultValue": 50
+      },
+      "staging": {
+        "defaultValue": 25
+      },
+      "production": {
+        "defaultValue": 20
+      }
+    },
+    "layout/home_sections": {
+      "type": "json",
+      "description": "JSON configuration for home screen layout",
+      "development": {
+        "defaultValue": "{\"sections\":[\"featured\",\"recent\",\"recommended\"]}"
+      },
+      "staging": {
+        "defaultValue": "{\"sections\":[\"featured\",\"recent\",\"recommended\"]}"
+      },
+      "production": {
+        "defaultValue": "{\"sections\":[\"featured\",\"recent\"]}"
+      }
+    }
+  },
+  "cohorts": {},
+  "tests": {}
+}

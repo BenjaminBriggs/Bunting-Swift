@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/bunting_codegen.build/master.swiftdeps"
+  },
+  "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/Sources/bunting-codegen/main.swift": {
+    "dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/bunting_codegen.build/main.d",
+    "object": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/bunting_codegen.build/main.swift.o",
+    "swiftmodule": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/bunting_codegen.build/main~partial.swiftmodule",
+    "swift-dependencies": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/bunting_codegen.build/main.swiftdeps",
+    "diagnostics": "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/bunting_codegen.build/main.dia"
+  }
+}

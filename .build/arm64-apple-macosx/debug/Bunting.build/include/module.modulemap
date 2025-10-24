@@ -1,0 +1,3 @@
+module Bunting {
+    header "/Users/ben/Local Projects/Bunting/bunting-sdk-swift/.build/arm64-apple-macosx/debug/Bunting.build/include/Bunting-Swift.h"
+}

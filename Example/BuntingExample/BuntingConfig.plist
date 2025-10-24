@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+		BUNTING CONFIGURATION
+
+		This file configures how the Bunting SDK connects to your backend
+		and verifies configuration authenticity.
+
+		IMPORTANT: This file must be included in your app's bundle.
+		In Xcode: Select the file → File Inspector → Target Membership → ✓ BuntingExample
+	-->
+
+	<!--
+		Endpoint URL
+		The URL where your Bunting configuration is hosted.
+		This should point to your CDN or object storage location.
+		The SDK will fetch config.json from this URL.
+	-->
+	<key>endpoint_url</key>
+	<string>https://cdn.example.com/bunting/your-app/config.json</string>
+
+	<!--
+		Public Keys
+		One or more RSA public keys used to verify JWS signatures.
+		The SDK will use the 'kid' (key ID) from the signature header
+		to find the matching public key.
+
+		To generate a key pair:
+		1. openssl genrsa -out private.pem 2048
+		2. openssl rsa -in private.pem -pubout -out public.pem
+		3. Use private.pem in your backend to sign configurations
+		4. Copy the contents of public.pem here (including headers)
+
+		Multiple keys support key rotation:
+		- Keep old keys while transitioning to new ones
+		- Apps with old keys can still verify until they update
+	-->
+	<key>public_keys</key>
+	<array>
+		<dict>
+			<key>kid</key>
+			<string>key-2025-01</string>
+			<key>pem</key>
+			<string>-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyourExamplePublicKey
+ThisIsAPlaceholderKeyReplaceWithYourActualRSAPublicKey1234567890
+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678
+90ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234
+-----END PUBLIC KEY-----</string>
+		</dict>
+		<!--
+		Example of adding a second key for rotation:
+		<dict>
+			<key>kid</key>
+			<string>key-2024-12</string>
+			<key>pem</key>
+			<string>-----BEGIN PUBLIC KEY-----
+			...your old public key...
+			-----END PUBLIC KEY-----</string>
+		</dict>
+		-->
+	</array>
+
+	<!--
+		Fetch Policy
+		Controls how often the SDK fetches new configuration.
+
+		min_interval_seconds:
+			Minimum time between fetch attempts (rate limiting).
+			Even if you call refresh() multiple times, the SDK will
+			respect this interval to avoid excessive network requests.
+			Default: 300 (5 minutes)
+
+		hard_ttl_days:
+			Maximum age of cached configuration before forcing a refresh.
+			Even if the server returns 304 Not Modified, the SDK will
+			perform a full fetch after this many days.
+			Default: 7 days
+	-->
+	<key>fetch_policy</key>
+	<dict>
+		<key>min_interval_seconds</key>
+		<integer>60</integer>
+		<key>hard_ttl_days</key>
+		<integer>7</integer>
+	</dict>
+
+	<!--
+		Certificate Pinning (Optional)
+		SPKI (Subject Public Key Info) hashes for certificate pinning.
+		This is an advanced security feature - only use if you understand
+		the implications and maintenance requirements.
+
+		To get your certificate's SPKI hash:
+		1. openssl s_client -connect cdn.example.com:443 -showcerts < /dev/null | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | openssl enc -base64
+
+		Uncomment to enable:
+		<key>cert_pins</key>
+		<array>
+			<string>sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</string>
+		</array>
+	-->
+</dict>
+</plist>
