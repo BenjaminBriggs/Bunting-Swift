@@ -33,9 +33,7 @@ let package = Package(
             targets: ["BuntingCodegenPlugin"]
         ),
     ],
-    dependencies: [
-        // No external dependencies for v1 - using only platform frameworks
-    ],
+    dependencies: [],
     targets: [
         .target(
             name: "Bunting",

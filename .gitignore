@@ -1,0 +1,57 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Xcode
+DerivedData/
+build/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+*.xcscmblueprint
+
+# Xcode workspace/SwiftPM integration
+Example/**/build/
+Example/**/DerivedData/
+**/*.xcworkspace/xcuserdata/
+
+# iOS/macOS Simulator logs (if any dumped locally)
+*.log
+
+# Dependency managers (uncomment if used)
+# Pods/
+# Carthage/Build/
+# Accio/
+# Dependencies/
+# .accio/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# Editors/IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+

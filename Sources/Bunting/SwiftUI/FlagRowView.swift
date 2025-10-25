@@ -28,6 +28,8 @@ public struct FlagRowView: View {
     @State private var intValue: Int = 0
     @State private var doubleValue: Double = 0.0
     @State private var dateValue: Date = Date()
+    @State private var showJSONEditor = false
+    @State private var jsonEditorText: String = ""
 
     public init(
         key: String,
@@ -91,7 +93,12 @@ public struct FlagRowView: View {
                         } else {
                             Button {
                                 initializeEditorValues()
-                                isEditingOverride = true
+                                if type == .json {
+                                    jsonEditorText = stringValue.isEmpty ? effectiveValue : stringValue
+                                    showJSONEditor = true
+                                } else {
+                                    isEditingOverride = true
+                                }
                             } label: {
                                 Image(systemName: "pencil")
                             }
@@ -103,10 +110,11 @@ public struct FlagRowView: View {
 
             if isEditingOverride {
                 VStack(spacing: 8) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Override Value").font(.caption).foregroundStyle(.secondary)
                         editorView
-                    }
+                            .font(.system(.body, design: .monospaced))
+                    .padding(8)
+                    .background(Color.secondary.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
                     HStack {
                         Button("Cancel") { isEditingOverride = false }.buttonStyle(.bordered)
                         Spacer()
@@ -114,9 +122,6 @@ public struct FlagRowView: View {
                             .buttonStyle(.borderedProminent)
                     }
                 }
-                .padding(8)
-                .background(Color.secondary.opacity(0.05))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
             } else {
                 VStack(alignment: .leading, spacing: 0) {
                     Text(effectiveValue)
@@ -146,6 +151,27 @@ public struct FlagRowView: View {
             }
         }
         .padding(.vertical, 4)
+        .sheet(isPresented: $showJSONEditor) {
+            NavigationStack {
+                JSONEditorView(text: $jsonEditorText)
+                    .padding()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .navigationTitle("Edit JSON")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") { showJSONEditor = false }
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") {
+                                onSetOverride?(jsonEditorText)
+                                isEditingOverride = false
+                                showJSONEditor = false
+                            }
+                        }
+                    }
+            }
+        }
     }
 
     @ViewBuilder
@@ -156,25 +182,66 @@ public struct FlagRowView: View {
         case .string:
             TextField("String value", text: $stringValue).textFieldStyle(.roundedBorder)
         case .integer:
-            Stepper(value: $intValue, in: -1000...1000) {
-                HStack { Text("Integer"); Spacer(); Text("\(intValue)").monospacedDigit() }
+            VStack(alignment: .leading, spacing: 8) {
+                TextField("Integer", value: $intValue, formatter: intFormatter)
+                    .textFieldStyle(.plain)
+                    #if canImport(UIKit)
+                    .keyboardType(.numberPad)
+                    #endif
+                Stepper(value: $intValue) {
+                    HStack { Text("Value"); Spacer(); Text("\(intValue)").monospacedDigit() }
+                }
             }
         case .double:
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Double: \(String(format: "%.2f", doubleValue))").monospacedDigit()
-                Slider(value: $doubleValue, in: 0...100)
+            VStack(alignment: .leading, spacing: 8) {
+                TextField("Double", value: $doubleValue, formatter: doubleFormatter)
+                    .textFieldStyle(.plain)
+                    #if canImport(UIKit)
+                    .keyboardType(.decimalPad)
+                    #endif
             }
         case .date:
             DatePicker("Date", selection: $dateValue, displayedComponents: [.date, .hourAndMinute])
                 .datePickerStyle(.compact)
         case .json:
-            TextEditor(text: $stringValue)
-                .frame(height: 100)
-                .font(.system(.caption, design: .monospaced))
-                .padding(4)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
-                .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.secondary.opacity(0.3), lineWidth: 1))
+            VStack(alignment: .leading, spacing: 8) {
+                Text(stringValue.isEmpty ? effectiveValue : stringValue)
+                    .font(.system(.body, design: .monospaced))
+                    .lineLimit(4)
+                    .padding(8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.secondary.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                Button {
+                    jsonEditorText = stringValue.isEmpty ? effectiveValue : stringValue
+                    showJSONEditor = true
+                } label: {
+                    Label("Edit JSON…", systemImage: "square.and.pencil")
+                }
+                .buttonStyle(.bordered)
+            }
         }
+    }
+
+    // MARK: - Formatters
+    private var intFormatter: NumberFormatter {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.allowsFloats = false
+        f.generatesDecimalNumbers = false
+        f.usesGroupingSeparator = false
+        return f
+    }
+
+    private var doubleFormatter: NumberFormatter {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        f.allowsFloats = true
+        f.maximumFractionDigits = 6
+        f.minimumFractionDigits = 0
+        f.usesGroupingSeparator = false
+        return f
     }
 
     private func initializeEditorValues() {
