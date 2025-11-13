@@ -92,7 +92,7 @@ public struct BuntingInfoView: View {
         }
         .sheet(isPresented: $showingDetails) {
             BuntingDetailsSheet(
-                environment: environment,
+                environment: BuntingEnvironment(rawValue: environment) ?? .production,
                 configVersion: configVersion,
                 publishedAt: publishedAt,
                 signatureVerified: signatureVerified,
@@ -103,7 +103,8 @@ public struct BuntingInfoView: View {
                 onResetIdentity: nil,
                 onRefresh: {
                     await loadInfo()
-                }
+                },
+                onChangeEnvironment: nil
             )
             .presentationDetents([.medium, .large])
         }

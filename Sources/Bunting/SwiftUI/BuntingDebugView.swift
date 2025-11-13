@@ -127,7 +127,7 @@ public struct BuntingDebugView: View {
         }
         .sheet(isPresented: $showingDetails) {
             BuntingDetailsSheet(
-                environment: environment,
+                environment: BuntingEnvironment(rawValue: environment) ?? .production,
                 configVersion: configVersion,
                 publishedAt: publishedAt,
                 signatureVerified: signatureVerified,
@@ -140,6 +140,11 @@ public struct BuntingDebugView: View {
                 },
                 onRefresh: {
                     await refreshConfig()
+                },
+                onChangeEnvironment: { newEnv in
+                    Bunting.shared.setEnvironment(newEnv)
+                    environment = newEnv.rawValue
+                    Task { await loadDebugInfo() }
                 }
             )
             .presentationDetents([.medium, .large])
@@ -178,7 +183,7 @@ public struct BuntingDebugView: View {
     // MARK: - Methods
 
     @MainActor
-    private func loadDebugInfo() async {
+    private func loadDebugInfo() {
         let bunting = Bunting.shared
 
         // Configuration metadata
@@ -244,9 +249,7 @@ public struct BuntingDebugView: View {
     @MainActor
     private func clearAllOverrides() {
         Bunting.shared.clearAllOverrides()
-        Task {
-            await loadDebugInfo()
-        }
+        loadDebugInfo()
     }
 
     // MARK: - Helper Methods

@@ -1,9 +1,4 @@
 //
-//  BuntingExampleApp.swift
-//  BuntingExample
-//
-//  Created by Benjamin Briggs on 24/10/2025.
-//
 
 import Bunting
 import SwiftUI

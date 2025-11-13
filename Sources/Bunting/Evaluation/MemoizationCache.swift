@@ -2,7 +2,8 @@ import Foundation
 
 /// Thread-safe memoization cache for flag evaluation results
 /// Invalidates when configuration, overrides, or context changes
-actor MemoizationCache {
+@MainActor
+final class MemoizationCache {
 
     private var cache: [CacheKey: FlagValue] = [:]
     private var hits: Int = 0

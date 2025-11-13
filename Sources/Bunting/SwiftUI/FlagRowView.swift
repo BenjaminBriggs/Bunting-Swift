@@ -180,7 +180,8 @@ public struct FlagRowView: View {
         case .boolean:
             Toggle("Enabled", isOn: $boolValue)
         case .string:
-            TextField("String value", text: $stringValue).textFieldStyle(.roundedBorder)
+            TextField("String value", text: $stringValue)
+                .textFieldStyle(.plain)
         case .integer:
             VStack(alignment: .leading, spacing: 8) {
                 TextField("Integer", value: $intValue, formatter: intFormatter)
@@ -188,9 +189,6 @@ public struct FlagRowView: View {
                     #if canImport(UIKit)
                     .keyboardType(.numberPad)
                     #endif
-                Stepper(value: $intValue) {
-                    HStack { Text("Value"); Spacer(); Text("\(intValue)").monospacedDigit() }
-                }
             }
         case .double:
             VStack(alignment: .leading, spacing: 8) {
@@ -201,8 +199,12 @@ public struct FlagRowView: View {
                     #endif
             }
         case .date:
-            DatePicker("Date", selection: $dateValue, displayedComponents: [.date, .hourAndMinute])
-                .datePickerStyle(.compact)
+            DatePicker(
+                "Date",
+                selection: $dateValue,
+                displayedComponents: [.date, .hourAndMinute]
+            )
+            .datePickerStyle(.compact)
         case .json:
             VStack(alignment: .leading, spacing: 8) {
                 Text(stringValue.isEmpty ? effectiveValue : stringValue)

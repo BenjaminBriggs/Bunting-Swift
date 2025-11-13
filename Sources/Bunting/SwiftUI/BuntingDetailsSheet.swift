@@ -2,7 +2,7 @@ import SwiftUI
 
 @available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *)
 public struct BuntingDetailsSheet: View {
-    let environment: String
+    let environment: BuntingEnvironment
     let configVersion: String?
     let publishedAt: Date?
     let signatureVerified: Bool
@@ -13,11 +13,13 @@ public struct BuntingDetailsSheet: View {
     let onResetIdentity: (() -> Void)?
     let onRefresh: (() async -> Void)?
     @State private var isRefreshing = false
+    let onChangeEnvironment: ((BuntingEnvironment) -> Void)?
+    @State private var selectedEnvironment: BuntingEnvironment
     
     @State private var showResetConfirmation = false
     
     public init(
-        environment: String,
+        environment: BuntingEnvironment,
         configVersion: String?,
         publishedAt: Date?,
         signatureVerified: Bool,
@@ -26,7 +28,8 @@ public struct BuntingDetailsSheet: View {
         etag: String?,
         showResetIdentity: Bool = false,
         onResetIdentity: (() -> Void)? = nil,
-        onRefresh: (() async -> Void)? = nil
+        onRefresh: (() async -> Void)? = nil,
+        onChangeEnvironment: ((BuntingEnvironment) -> Void)? = nil
     ) {
         self.environment = environment
         self.configVersion = configVersion
@@ -38,13 +41,29 @@ public struct BuntingDetailsSheet: View {
         self.showResetIdentity = showResetIdentity
         self.onResetIdentity = onResetIdentity
         self.onRefresh = onRefresh
+        self.onChangeEnvironment = onChangeEnvironment
+        _selectedEnvironment = State(initialValue: environment)
     }
     
     public var body: some View {
         NavigationStack {
             List {
                 Section("Configuration") {
-                    LabeledContent("Environment", value: environment)
+                    if let onChangeEnvironment {
+                        Picker("Environment", selection: $selectedEnvironment) {
+                            Text("Development").tag(BuntingEnvironment.development)
+                            Text("Staging").tag(BuntingEnvironment.staging)
+                            Text("Production").tag(BuntingEnvironment.production)
+                        }
+                        #if os(iOS)
+                        .pickerStyle(.segmented)
+                        #endif
+                        .onChange(of: selectedEnvironment) { newValue in
+                            onChangeEnvironment(newValue)
+                        }
+                    } else {
+                        LabeledContent("Environment", value: selectedEnvironment.rawValue.capitalized)
+                    }
                 }
                 
                 Section("Status") {
@@ -161,7 +180,7 @@ public struct BuntingDetailsSheet: View {
 
 #Preview("Details Sheet Example") {
     BuntingDetailsSheet(
-        environment: "production",
+        environment: .production,
         configVersion: "2025-01-15.1",
         publishedAt: ISO8601DateFormatter().date(from: "2025-01-15T10:00:00Z"),
         signatureVerified: true,
@@ -175,7 +194,7 @@ public struct BuntingDetailsSheet: View {
 
 #Preview("Unverified — Minimal Data") {
     BuntingDetailsSheet(
-        environment: "staging",
+        environment: .staging,
         configVersion: nil,
         publishedAt: nil,
         signatureVerified: false,
@@ -188,7 +207,7 @@ public struct BuntingDetailsSheet: View {
 
 #Preview("With ETag, No Last Fetch") {
     BuntingDetailsSheet(
-        environment: "development",
+        environment: .development,
         configVersion: "2025-02-10.3",
         publishedAt: ISO8601DateFormatter().date(from: "2025-02-10T08:30:00Z"),
         signatureVerified: true,
@@ -202,7 +221,7 @@ public struct BuntingDetailsSheet: View {
 
 #Preview("Long Values") {
     BuntingDetailsSheet(
-        environment: "production-eu-west-1",
+        environment: .production,
         configVersion: "2025-03-01.12-extra-long-version-identifier",
         publishedAt: ISO8601DateFormatter().date(from: "2025-03-01T12:00:00Z"),
         signatureVerified: true,
