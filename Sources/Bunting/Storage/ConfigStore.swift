@@ -142,15 +142,27 @@ actor ConfigStore {
             throw BuntingError.networkError(URLError(.badServerResponse))
         }
 
-        // Extract signature from header
-        guard let signatureHeader = httpResponse.value(forHTTPHeaderField: "x-bunting-signature")
+        // Fetch the detached signature (config.json.sig) and verify it against
+        // the exact config bytes we just fetched.
+        guard let sigURL = URL(string: bootstrapConfig.endpointURL + ".sig") else {
+            throw BuntingError.invalidConfiguration
+        }
+        let (sigData, sigResponse) = try await session.data(from: sigURL)
+        guard
+            (sigResponse as? HTTPURLResponse)?.statusCode == 200,
+            let jws = String(data: sigData, encoding: .utf8)
         else {
+            await notifyDidVerifySignature(success: false)
+            await notifyDidCompleteFetch(success: false, error: BuntingError.signatureVerificationFailed)
             throw BuntingError.signatureVerificationFailed
         }
 
-        // Verify JWS signature
         do {
-            try verifySignature(signatureHeader, payload: data)
+            try JWSVerifier.verifyDetached(
+                jws: jws,
+                payload: data,
+                publicKeys: bootstrapConfig.publicKeys
+            )
             await notifyDidVerifySignature(success: true)
         } catch {
             await notifyDidVerifySignature(success: false)
@@ -177,91 +189,6 @@ actor ConfigStore {
 
         // Notify successful fetch completion
         await notifyDidCompleteFetch(success: true, error: nil)
-    }
-
-    // MARK: - JWS Verification
-
-    private func verifySignature(_ jws: String, payload: Data) throws {
-        // Parse compact JWS: header.payload.signature
-        let parts = jws.split(separator: ".")
-        guard parts.count == 3 else {
-            throw BuntingError.signatureVerificationFailed
-        }
-
-        // Decode header to get kid
-        guard
-            let headerData = Data(
-                base64Encoded: String(parts[0]), options: .ignoreUnknownCharacters),
-            let headerJSON = try? JSONSerialization.jsonObject(with: headerData) as? [String: Any],
-            let kid = headerJSON["kid"] as? String
-        else {
-            throw BuntingError.signatureVerificationFailed
-        }
-
-        // Find matching public key
-        guard let keyInfo = bootstrapConfig.publicKeys.first(where: { $0.kid == kid }) else {
-            throw BuntingError.signatureVerificationFailed
-        }
-
-        // Convert PEM to SecKey
-        guard let publicKey = try? convertPEMToSecKey(keyInfo.pem) else {
-            throw BuntingError.signatureVerificationFailed
-        }
-
-        // Verify signature
-        // The signed data is header.payload (base64url encoded)
-        let signedData = "\(parts[0]).\(parts[1])".data(using: .utf8)!
-
-        guard
-            let signatureData = Data(
-                base64Encoded: String(parts[2]), options: .ignoreUnknownCharacters)
-        else {
-            throw BuntingError.signatureVerificationFailed
-        }
-
-        let algorithm = SecKeyAlgorithm.rsaSignatureMessagePKCS1v15SHA256
-        var error: Unmanaged<CFError>?
-
-        let verified = SecKeyVerifySignature(
-            publicKey,
-            algorithm,
-            signedData as CFData,
-            signatureData as CFData,
-            &error
-        )
-
-        if verified == false {
-            throw BuntingError.signatureVerificationFailed
-        }
-    }
-
-    private func convertPEMToSecKey(_ pem: String) throws -> SecKey {
-        // Remove PEM headers/footers and whitespace
-        let base64 =
-            pem
-            .replacingOccurrences(of: "-----BEGIN PUBLIC KEY-----", with: "")
-            .replacingOccurrences(of: "-----END PUBLIC KEY-----", with: "")
-            .replacingOccurrences(of: "\n", with: "")
-            .replacingOccurrences(of: "\r", with: "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard let keyData = Data(base64Encoded: base64) else {
-            throw BuntingError.signatureVerificationFailed
-        }
-
-        let attributes: [String: Any] = [
-            kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
-            kSecAttrKeyClass as String: kSecAttrKeyClassPublic,
-        ]
-
-        var error: Unmanaged<CFError>?
-        guard
-            let secKey = SecKeyCreateWithData(keyData as CFData, attributes as CFDictionary, &error)
-        else {
-            throw BuntingError.signatureVerificationFailed
-        }
-
-        return secKey
     }
 
     // MARK: - Caching
