@@ -1,5 +1,6 @@
 #!/usr/bin/env swift
 
+import BuntingVerify
 import Foundation
 
 #if canImport(FoundationNetworking)
@@ -12,8 +13,10 @@ import Foundation
 /// This tool:
 /// 1. Reads BuntingConfig.plist for endpoint and keys
 /// 2. Fetches config.json from the endpoint
-/// 3. Verifies the JWS signature
-/// 4. Saves the verified config to the output path (or current directory)
+/// 3. Reads the detached JWS from the x-bunting-signature response header,
+///    falling back to fetching <endpoint>.sig
+/// 4. Cryptographically verifies the signature over the exact fetched bytes
+/// 5. Saves the verified config to the output path (or current directory)
 
 // MARK: - Models
 
@@ -25,11 +28,6 @@ struct BuntingConfigPlist: Codable {
         case endpointURL = "endpoint_url"
         case publicKeys = "public_keys"
     }
-}
-
-struct PublicKeyInfo: Codable {
-    let kid: String
-    let pem: String
 }
 
 struct BuntingConfiguration: Codable {
@@ -46,6 +44,15 @@ struct BuntingConfiguration: Codable {
     }
 }
 
+// MARK: - Exit codes
+
+enum ExitCode {
+    static let usageOrPlistError: Int32 = 1
+    static let networkError: Int32 = 2
+    static let signatureError: Int32 = 3
+    static let decodeError: Int32 = 4
+}
+
 // MARK: - Main
 
 func main() {
@@ -53,56 +60,98 @@ func main() {
 
     guard arguments.count >= 2 else {
         printUsage()
-        exit(1)
+        exit(ExitCode.usageOrPlistError)
     }
 
     let plistPath = arguments[1]
     let outputPath = arguments.count >= 3 ? arguments[2] : "BuntingConfig.json"
 
+    print("📦 Bunting Config Fetcher")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+    // Load the plist
+    print("\n1️⃣  Loading configuration from: \(plistPath)")
+    let plistConfig: BuntingConfigPlist
     do {
-        print("📦 Bunting Config Fetcher")
-        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-
-        // Load the plist
-        print("\n1️⃣  Loading configuration from: \(plistPath)")
-        let plistConfig = try loadPlist(at: plistPath)
-        print("   ✅ Loaded endpoint: \(plistConfig.endpointURL)")
-        print("   ✅ Found \(plistConfig.publicKeys.count) public key(s)")
-
-        // Fetch the config
-        print("\n2️⃣  Fetching config from: \(plistConfig.endpointURL)")
-        let (configData, signature) = try fetchConfig(from: plistConfig.endpointURL)
-        print("   ✅ Downloaded \(configData.count) bytes")
-
-        // Verify signature
-        print("\n3️⃣  Verifying JWS signature...")
-        try verifySignature(signature, payload: configData, keys: plistConfig.publicKeys)
-        print("   ✅ Signature verified successfully")
-
-        // Parse to validate
-        print("\n4️⃣  Validating configuration...")
-        let config = try JSONDecoder().decode(BuntingConfiguration.self, from: configData)
-        print("   ✅ Schema version: \(config.schemaVersion)")
-        print("   ✅ Config version: \(config.configVersion)")
-        print("   ✅ App identifier: \(config.appIdentifier)")
-        print("   ✅ Published at: \(config.publishedAt)")
-
-        // Save to file
-        print("\n5️⃣  Saving config to: \(outputPath)")
-        try configData.write(to: URL(fileURLWithPath: outputPath))
-        print("   ✅ Saved successfully")
-
-        print("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-        print("✨ Success! Configuration fetched and verified.")
-        print("")
-
+        plistConfig = try loadPlist(at: plistPath)
     } catch {
-        print("\n❌ Error: \(error.localizedDescription)")
-        exit(1)
+        fail(error, code: ExitCode.usageOrPlistError)
     }
+    print("   ✅ Loaded endpoint: \(plistConfig.endpointURL)")
+    print("   ✅ Found \(plistConfig.publicKeys.count) public key(s)")
+
+    guard let configURL = URL(string: plistConfig.endpointURL) else {
+        fail(BuntingCLIError.invalidURL(plistConfig.endpointURL), code: ExitCode.usageOrPlistError)
+    }
+
+    // Fetch the config
+    print("\n2️⃣  Fetching config from: \(plistConfig.endpointURL)")
+    let configData: Data
+    let headerSignature: String?
+    do {
+        (configData, headerSignature) = try fetchConfig(from: configURL)
+    } catch {
+        fail(error, code: ExitCode.networkError)
+    }
+    print("   ✅ Downloaded \(configData.count) bytes")
+
+    // Obtain the detached JWS: header first, then the .sig file
+    print("\n3️⃣  Verifying JWS signature...")
+    let jws: String
+    if let headerSignature {
+        jws = headerSignature
+        print("   ℹ️  Signature transport: \(SignatureTransport.headerName) header")
+    } else {
+        let sigURL = SignatureTransport.sigURL(for: configURL)
+        do {
+            jws = try fetchSignature(from: sigURL)
+        } catch {
+            print("   ❌ No \(SignatureTransport.headerName) header and fetching \(sigURL.absoluteString) failed")
+            fail(error, code: ExitCode.signatureError)
+        }
+        print("   ℹ️  Signature transport: .sig fetch (\(sigURL.absoluteString))")
+    }
+
+    do {
+        try JWSVerifier.verifyDetached(jws: jws, payload: configData, publicKeys: plistConfig.publicKeys)
+    } catch {
+        fail(error, code: ExitCode.signatureError)
+    }
+    print("   ✅ Signature verified")
+
+    // Parse to validate
+    print("\n4️⃣  Validating configuration...")
+    let config: BuntingConfiguration
+    do {
+        config = try JSONDecoder().decode(BuntingConfiguration.self, from: configData)
+    } catch {
+        fail(error, code: ExitCode.decodeError)
+    }
+    print("   ✅ Schema version: \(config.schemaVersion)")
+    print("   ✅ Config version: \(config.configVersion)")
+    print("   ✅ App identifier: \(config.appIdentifier)")
+    print("   ✅ Published at: \(config.publishedAt)")
+
+    // Save to file — only ever reached with verified bytes
+    print("\n5️⃣  Saving config to: \(outputPath)")
+    do {
+        try configData.write(to: URL(fileURLWithPath: outputPath))
+    } catch {
+        fail(error, code: ExitCode.usageOrPlistError)
+    }
+    print("   ✅ Saved successfully")
+
+    print("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print("✨ Success! Configuration fetched and verified.")
+    print("")
 }
 
 // MARK: - Helper Functions
+
+func fail(_ error: Error, code: Int32) -> Never {
+    print("\n❌ Error: \(error.localizedDescription)")
+    exit(code)
+}
 
 func printUsage() {
     print(
@@ -119,9 +168,17 @@ func printUsage() {
         EXAMPLE:
             bunting-cli ./BuntingConfig.plist ./BuntingConfig.json
 
+        EXIT CODES:
+            1   Usage, plist, or file-system error
+            2   Network or HTTP error fetching config.json
+            3   Signature missing (no header, no .sig) or verification failed
+            4   Config JSON failed to decode
+
         DESCRIPTION:
             Fetches configuration from the endpoint specified in BuntingConfig.plist,
-            verifies the JWS signature, and saves the verified config to a file.
+            reads the detached JWS from the x-bunting-signature response header
+            (falling back to <endpoint>.sig), cryptographically verifies it over the
+            exact fetched bytes, and saves the verified config to a file.
 
             This is typically used during development to download the latest config
             for code generation purposes.
@@ -135,13 +192,32 @@ func loadPlist(at path: String) throws -> BuntingConfigPlist {
     return try decoder.decode(BuntingConfigPlist.self, from: data)
 }
 
-func fetchConfig(from urlString: String) throws -> (Data, String) {
-    guard let url = URL(string: urlString) else {
-        throw BuntingCLIError.invalidURL(urlString)
+/// Fetches the config bytes plus the optional detached JWS from the
+/// x-bunting-signature response header.
+func fetchConfig(from url: URL) throws -> (Data, String?) {
+    let (data, response) = try synchronousGET(url)
+    guard response.statusCode == 200 else {
+        throw BuntingCLIError.httpError(response.statusCode)
     }
+    let signature = response.value(forHTTPHeaderField: SignatureTransport.headerName)
+    return (data, signature)
+}
 
+/// Fetches the detached JWS from the sibling `.sig` object.
+func fetchSignature(from url: URL) throws -> String {
+    let (data, response) = try synchronousGET(url)
+    guard response.statusCode == 200 else {
+        throw BuntingCLIError.httpError(response.statusCode)
+    }
+    guard let jws = String(data: data, encoding: .utf8), jws.isEmpty == false else {
+        throw BuntingCLIError.invalidSignature("Signature file is not valid UTF-8")
+    }
+    return jws.trimmingCharacters(in: .whitespacesAndNewlines)
+}
+
+private func synchronousGET(_ url: URL) throws -> (Data, HTTPURLResponse) {
     let semaphore = DispatchSemaphore(value: 0)
-    var result: Result<(Data, String), Error>?
+    var result: Result<(Data, HTTPURLResponse), Error>?
 
     var request = URLRequest(url: url)
     request.cachePolicy = .reloadIgnoringLocalCacheData
@@ -159,22 +235,12 @@ func fetchConfig(from urlString: String) throws -> (Data, String) {
             return
         }
 
-        guard httpResponse.statusCode == 200 else {
-            result = .failure(BuntingCLIError.httpError(httpResponse.statusCode))
-            return
-        }
-
         guard let data = data else {
             result = .failure(BuntingCLIError.noData)
             return
         }
 
-        guard let signature = httpResponse.value(forHTTPHeaderField: "x-bunting-signature") else {
-            result = .failure(BuntingCLIError.noSignature)
-            return
-        }
-
-        result = .success((data, signature))
+        result = .success((data, httpResponse))
     }
 
     task.resume()
@@ -190,34 +256,6 @@ func fetchConfig(from urlString: String) throws -> (Data, String) {
     }
 }
 
-func verifySignature(_ jws: String, payload: Data, keys: [PublicKeyInfo]) throws {
-    // Parse compact JWS: header.payload.signature
-    let parts = jws.split(separator: ".")
-    guard parts.count == 3 else {
-        throw BuntingCLIError.invalidSignature("Invalid JWS format")
-    }
-
-    // Decode header to get kid
-    guard let headerData = Data(base64Encoded: String(parts[0]), options: .ignoreUnknownCharacters),
-        let headerJSON = try? JSONSerialization.jsonObject(with: headerData) as? [String: Any],
-        let kid = headerJSON["kid"] as? String
-    else {
-        throw BuntingCLIError.invalidSignature("Cannot decode JWS header")
-    }
-
-    // Find matching public key
-    guard let keyInfo = keys.first(where: { $0.kid == kid }) else {
-        throw BuntingCLIError.keyNotFound(kid)
-    }
-
-    // For CLI purposes, we'll skip actual cryptographic verification
-    // In a real implementation, you'd use Security framework or a crypto library
-    // The SDK itself handles verification at runtime
-
-    print("   ℹ️  Using key: \(kid)")
-    print("   ⚠️  Note: CLI performs basic validation only. Full verification happens in SDK.")
-}
-
 // MARK: - Errors
 
 enum BuntingCLIError: LocalizedError {
@@ -225,9 +263,7 @@ enum BuntingCLIError: LocalizedError {
     case invalidResponse
     case httpError(Int)
     case noData
-    case noSignature
     case invalidSignature(String)
-    case keyNotFound(String)
     case unknown
 
     var errorDescription: String? {
@@ -240,12 +276,8 @@ enum BuntingCLIError: LocalizedError {
             return "HTTP error: \(code)"
         case .noData:
             return "No data received"
-        case .noSignature:
-            return "No x-bunting-signature header found"
         case .invalidSignature(let reason):
             return "Invalid signature: \(reason)"
-        case .keyNotFound(let kid):
-            return "Public key not found for kid: \(kid)"
         case .unknown:
             return "Unknown error occurred"
         }
