@@ -19,9 +19,36 @@ public enum JWSVerifier {
 
         guard
             let headerData = base64URLDecode(protectedSegment),
-            let headerJSON = try? JSONSerialization.jsonObject(with: headerData) as? [String: Any],
-            let kid = headerJSON["kid"] as? String
+            let headerJSON = try? JSONSerialization.jsonObject(with: headerData) as? [String: Any]
         else {
+            throw JWSVerificationError.malformedJWS
+        }
+
+        // RFC 7797: the signer must be understood to be using an unencoded
+        // detached payload before the signature bytes mean anything, so
+        // header validation runs before kid lookup or signature verification.
+        let alg = headerJSON["alg"] as? String
+        guard alg == "RS256" else {
+            throw JWSVerificationError.unsupportedAlgorithm(alg)
+        }
+
+        let b64 = headerJSON["b64"] as? Bool
+        guard b64 == false else {
+            throw JWSVerificationError.invalidB64Parameter
+        }
+
+        // RFC 7515 §4.1.11: a JWS whose crit names an extension the verifier
+        // does not understand must be rejected. This verifier understands
+        // only "b64", so crit must be exactly ["b64"].
+        guard
+            let crit = headerJSON["crit"] as? [String],
+            crit.isEmpty == false,
+            crit.allSatisfy({ $0 == "b64" })
+        else {
+            throw JWSVerificationError.unsupportedCriticalParameters
+        }
+
+        guard let kid = headerJSON["kid"] as? String else {
             throw JWSVerificationError.malformedJWS
         }
 

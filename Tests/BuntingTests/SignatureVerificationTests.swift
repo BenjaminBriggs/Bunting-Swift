@@ -25,6 +25,24 @@ final class SignatureVerificationTests: XCTestCase {
         [PublicKeyInfo(kid: "fixture-key", pem: String(data: Data(base64Encoded: pemB64)!, encoding: .utf8)!)]
     }
 
+    /// Builds a detached JWS with a custom protected header, reusing the
+    /// fixture's real signature segment. Header validation must reject
+    /// before the (now header-mismatched) signature is ever verified, so
+    /// these fixtures don't need a valid signature to test rejection.
+    private func jwsWithHeader(_ header: [String: Any]) -> String {
+        let headerData = try! JSONSerialization.data(withJSONObject: header)
+        let headerB64 = base64URLEncode(headerData)
+        let signatureSegment = jws.split(separator: ".", omittingEmptySubsequences: false)[2]
+        return "\(headerB64)..\(signatureSegment)"
+    }
+
+    private func base64URLEncode(_ data: Data) -> String {
+        data.base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+    }
+
     func testVerifiesRealAdminDetachedSignature() throws {
         XCTAssertNoThrow(
             try JWSVerifier.verifyDetached(jws: jws, payload: config, publicKeys: keys)
@@ -79,5 +97,60 @@ final class SignatureVerificationTests: XCTestCase {
         XCTAssertThrowsError(
             try JWSVerifier.verifyDetached(jws: twoPart, payload: config, publicKeys: keys)
         )
+    }
+
+    // MARK: - Header strictness (alg / b64 / crit)
+
+    func testRejectsUnsupportedAlgorithm() {
+        let header: [String: Any] = ["alg": "RS512", "kid": "fixture-key", "b64": false, "crit": ["b64"]]
+        XCTAssertThrowsError(
+            try JWSVerifier.verifyDetached(jws: jwsWithHeader(header), payload: config, publicKeys: keys)
+        ) { error in
+            guard case JWSVerificationError.unsupportedAlgorithm(let alg) = error else {
+                return XCTFail("Expected unsupportedAlgorithm, got \(error)")
+            }
+            XCTAssertEqual(alg, "RS512")
+        }
+    }
+
+    func testRejectsNoneAlgorithm() {
+        let header: [String: Any] = ["alg": "none", "kid": "fixture-key", "b64": false, "crit": ["b64"]]
+        XCTAssertThrowsError(
+            try JWSVerifier.verifyDetached(jws: jwsWithHeader(header), payload: config, publicKeys: keys)
+        ) { error in
+            guard case JWSVerificationError.unsupportedAlgorithm(let alg) = error else {
+                return XCTFail("Expected unsupportedAlgorithm, got \(error)")
+            }
+            XCTAssertEqual(alg, "none")
+        }
+    }
+
+    func testRejectsMissingB64() {
+        let header: [String: Any] = ["alg": "RS256", "kid": "fixture-key", "crit": ["b64"]]
+        XCTAssertThrowsError(
+            try JWSVerifier.verifyDetached(jws: jwsWithHeader(header), payload: config, publicKeys: keys)
+        ) { error in
+            XCTAssertEqual(error as? JWSVerificationError, .invalidB64Parameter)
+        }
+    }
+
+    func testRejectsMissingCrit() {
+        let header: [String: Any] = ["alg": "RS256", "kid": "fixture-key", "b64": false]
+        XCTAssertThrowsError(
+            try JWSVerifier.verifyDetached(jws: jwsWithHeader(header), payload: config, publicKeys: keys)
+        ) { error in
+            XCTAssertEqual(error as? JWSVerificationError, .unsupportedCriticalParameters)
+        }
+    }
+
+    func testRejectsUnknownCriticalExtension() {
+        let header: [String: Any] = [
+            "alg": "RS256", "kid": "fixture-key", "b64": false, "crit": ["b64", "exp"],
+        ]
+        XCTAssertThrowsError(
+            try JWSVerifier.verifyDetached(jws: jwsWithHeader(header), payload: config, publicKeys: keys)
+        ) { error in
+            XCTAssertEqual(error as? JWSVerificationError, .unsupportedCriticalParameters)
+        }
     }
 }
