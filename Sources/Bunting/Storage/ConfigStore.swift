@@ -7,8 +7,11 @@ import OSLog
 actor ConfigStore {
     private let bootstrapConfig: BootstrapConfig
     private let fileManager = FileManager.default
+    private let sessionConfiguration: URLSessionConfiguration
 
     private var activeConfig: BuntingConfiguration?
+    private var activeSource: ConfigSource?
+    private var activeSignatureVerified = false
     private var lastFetchTime: Date?
     private var cachedETag: String?
     private var cachedLastModified: String?
@@ -16,6 +19,7 @@ actor ConfigStore {
 
     private let cacheDirectory: URL
     private let configFileName = "config_v1.json"
+    private let signatureFileName = "config_v1.json.sig"
     private let metadataFileName = "metadata.json"
 
     // Delegate for event notifications
@@ -26,19 +30,28 @@ actor ConfigStore {
         self.eventsDelegate = delegate
     }
 
-    init(bootstrapConfig: BootstrapConfig, eventsDelegate: BuntingEventsDelegate? = nil) throws {
+    init(
+        bootstrapConfig: BootstrapConfig,
+        eventsDelegate: BuntingEventsDelegate? = nil,
+        sessionConfiguration: URLSessionConfiguration = .ephemeral,
+        cacheDirectoryOverride: URL? = nil
+    ) throws {
         self.eventsDelegate = eventsDelegate
         self.bootstrapConfig = bootstrapConfig
+        self.sessionConfiguration = sessionConfiguration
 
-        // Set up cache directory in Application Support
-        let appSupport = try fileManager.url(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask,
-            appropriateFor: nil,
-            create: true
-        )
-
-        self.cacheDirectory = appSupport.appendingPathComponent("Bunting", isDirectory: true)
+        if let cacheDirectoryOverride {
+            self.cacheDirectory = cacheDirectoryOverride
+        } else {
+            // Set up cache directory in Application Support
+            let appSupport = try fileManager.url(
+                for: .applicationSupportDirectory,
+                in: .userDomainMask,
+                appropriateFor: nil,
+                create: true
+            )
+            self.cacheDirectory = appSupport.appendingPathComponent("Bunting", isDirectory: true)
+        }
 
         // Create Bunting directory if needed
         if fileManager.fileExists(atPath: cacheDirectory.path) == false {
@@ -69,6 +82,22 @@ actor ConfigStore {
     /// Returns the active configuration, or nil if not loaded
     func getConfiguration() -> BuntingConfiguration? {
         return activeConfig
+    }
+
+    /// Snapshot of the active configuration plus its provenance, returned in a
+    /// single actor hop for the facade's @MainActor snapshots.
+    struct ConfigState: Sendable {
+        let configuration: BuntingConfiguration?
+        let source: ConfigSource?
+        let signatureVerified: Bool
+    }
+
+    func getConfigState() -> ConfigState {
+        return ConfigState(
+            configuration: activeConfig,
+            source: activeSource,
+            signatureVerified: activeSignatureVerified
+        )
     }
 
     /// Refreshes the configuration from the remote endpoint
@@ -115,9 +144,8 @@ actor ConfigStore {
             }
         }
 
-        let config = URLSessionConfiguration.ephemeral
-        config.urlCache = nil
-        let session = URLSession(configuration: config)
+        sessionConfiguration.urlCache = nil
+        let session = URLSession(configuration: sessionConfiguration)
 
         // Notify delegate that fetch is starting
         await notifyDidStartFetch(url: url)
@@ -143,19 +171,25 @@ actor ConfigStore {
             throw BuntingError.networkError(URLError(.badServerResponse))
         }
 
-        // Fetch the detached signature (config.json.sig) and verify it against
-        // the exact config bytes we just fetched.
-        guard let sigURL = URL(string: bootstrapConfig.endpointURL + ".sig") else {
-            throw BuntingError.invalidConfiguration
-        }
-        let (sigData, sigResponse) = try await session.data(from: sigURL)
-        guard
-            (sigResponse as? HTTPURLResponse)?.statusCode == 200,
-            let jws = String(data: sigData, encoding: .utf8)
-        else {
-            await notifyDidVerifySignature(success: false)
-            await notifyDidCompleteFetch(success: false, error: BuntingError.signatureVerificationFailed)
-            throw BuntingError.signatureVerificationFailed
+        // Obtain the detached JWS and verify it against the exact config bytes
+        // we just fetched. Preferred transport is the x-bunting-signature
+        // response header (saves a request); fall back to the sibling
+        // config.json.sig object.
+        let jws: String
+        if let headerSig = httpResponse.value(forHTTPHeaderField: SignatureTransport.headerName) {
+            jws = headerSig
+        } else {
+            let sigURL = SignatureTransport.sigURL(for: url)
+            guard
+                let (sigData, sigResponse) = try? await session.data(from: sigURL),
+                (sigResponse as? HTTPURLResponse)?.statusCode == 200,
+                let sigString = String(data: sigData, encoding: .utf8)
+            else {
+                await notifyDidVerifySignature(success: false)
+                await notifyDidCompleteFetch(success: false, error: BuntingError.signatureVerificationFailed)
+                throw BuntingError.signatureVerificationFailed
+            }
+            jws = sigString.trimmingCharacters(in: .whitespacesAndNewlines)
         }
 
         do {
@@ -175,11 +209,13 @@ actor ConfigStore {
         let decoder = JSONDecoder()
         let newConfig = try decoder.decode(BuntingConfiguration.self, from: data)
 
-        // Save to cache
-        try saveToCache(data, response: httpResponse)
+        // Save to cache (signature first, then config)
+        try saveToCache(data, signature: jws)
 
         // Update active config
         activeConfig = newConfig
+        activeSource = .fetched
+        activeSignatureVerified = true
         lastTTLRefresh = Date()
 
         // Update cached headers
@@ -196,6 +232,7 @@ actor ConfigStore {
 
     private func loadCachedConfig() throws {
         let configURL = cacheDirectory.appendingPathComponent(configFileName)
+        let signatureURL = cacheDirectory.appendingPathComponent(signatureFileName)
 
         guard fileManager.fileExists(atPath: configURL.path) else {
             BuntingLog.config.notice("Cached config not found at path: \(configURL.path, privacy: .private)")
@@ -203,9 +240,40 @@ actor ConfigStore {
         }
 
         let data = try Data(contentsOf: configURL)
+
+        // Re-verify the persisted signature over the exact cached bytes. A
+        // missing or failing signature means the cache can never verify again
+        // with the shipped key set — delete it so we don't retry every launch,
+        // and fall through to the bundled seed.
+        guard
+            let sigData = try? Data(contentsOf: signatureURL),
+            let jws = String(data: sigData, encoding: .utf8)
+        else {
+            BuntingLog.config.notice("Cached config has no signature — discarding cache")
+            deleteCacheFiles()
+            throw BuntingError.signatureVerificationFailed
+        }
+
+        do {
+            try JWSVerifier.verifyDetached(
+                jws: jws,
+                payload: data,
+                publicKeys: bootstrapConfig.publicKeys
+            )
+        } catch {
+            BuntingLog.config.error("Cached config failed signature re-verification — discarding cache")
+            deleteCacheFiles()
+            Task {
+                await notifyDidVerifySignature(success: false)
+            }
+            throw BuntingError.signatureVerificationFailed
+        }
+
         let decoder = JSONDecoder()
         let config = try decoder.decode(BuntingConfiguration.self, from: data)
         activeConfig = config
+        activeSource = .cache
+        activeSignatureVerified = true
 
         // Load metadata
         loadMetadata()
@@ -232,6 +300,8 @@ actor ConfigStore {
             let decoder = JSONDecoder()
             let config = try decoder.decode(BuntingConfiguration.self, from: data)
             activeConfig = config
+            activeSource = .seed
+            activeSignatureVerified = false
 
             // Notify delegate
             Task {
@@ -245,9 +315,20 @@ actor ConfigStore {
         }
     }
 
-    private func saveToCache(_ data: Data, response: HTTPURLResponse) throws {
+    /// Persists the config bytes and their detached JWS. The signature is
+    /// written first: a crash between the two writes leaves a stale-config /
+    /// new-signature pair that simply fails re-verification on next launch —
+    /// never a silently unverified config.
+    private func saveToCache(_ data: Data, signature: String) throws {
         let configURL = cacheDirectory.appendingPathComponent(configFileName)
+        let signatureURL = cacheDirectory.appendingPathComponent(signatureFileName)
+        try Data(signature.utf8).write(to: signatureURL, options: .atomic)
         try data.write(to: configURL, options: .atomic)
+    }
+
+    private func deleteCacheFiles() {
+        try? fileManager.removeItem(at: cacheDirectory.appendingPathComponent(configFileName))
+        try? fileManager.removeItem(at: cacheDirectory.appendingPathComponent(signatureFileName))
     }
 
     private func loadMetadata() {
