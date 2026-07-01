@@ -33,23 +33,31 @@ let package = Package(
             targets: ["BuntingCodegenPlugin"]
         ),
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
+    ],
     targets: [
+        // Shared JWS verification used by the SDK and bunting-cli
+        .target(
+            name: "BuntingVerify",
+            dependencies: [],
+            path: "Sources/BuntingVerify"
+        ),
         .target(
             name: "Bunting",
-            dependencies: [],
+            dependencies: ["BuntingVerify"],
             path: "Sources/Bunting"
         ),
         .testTarget(
             name: "BuntingTests",
-            dependencies: ["Bunting"],
+            dependencies: ["Bunting", "BuntingVerify"],
             path: "Tests/BuntingTests"
         ),
 
         // Command-line tool for fetching configuration
         .executableTarget(
             name: "bunting-cli",
-            dependencies: [],
+            dependencies: ["BuntingVerify"],
             path: "Sources/bunting-cli"
         ),
 

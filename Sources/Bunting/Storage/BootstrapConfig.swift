@@ -1,3 +1,4 @@
+import BuntingVerify
 import Foundation
 
 /// Bootstrap configuration loaded from BuntingConfig.plist
@@ -24,12 +25,6 @@ struct BootstrapConfig: Codable {
         let decoder = PropertyListDecoder()
         return try decoder.decode(BootstrapConfig.self, from: data)
     }
-}
-
-/// Public key information for JWS verification
-struct PublicKeyInfo: Codable {
-    let kid: String
-    let pem: String
 }
 
 /// Fetch policy configuration

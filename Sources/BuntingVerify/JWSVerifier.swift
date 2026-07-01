@@ -7,13 +7,13 @@ import Security
 ///
 /// This binds the signature to the precise bytes that were fetched — a tampered
 /// config fails verification.
-enum JWSVerifier {
+public enum JWSVerifier {
 
-    static func verifyDetached(jws: String, payload: Data, publicKeys: [PublicKeyInfo]) throws {
+    public static func verifyDetached(jws: String, payload: Data, publicKeys: [PublicKeyInfo]) throws {
         // Keep empty segments: detached compact form is `header..signature`.
         let parts = jws.split(separator: ".", omittingEmptySubsequences: false).map(String.init)
         guard parts.count == 3 else {
-            throw BuntingError.signatureVerificationFailed
+            throw JWSVerificationError.malformedJWS
         }
         let protectedSegment = parts[0]
 
@@ -22,11 +22,11 @@ enum JWSVerifier {
             let headerJSON = try? JSONSerialization.jsonObject(with: headerData) as? [String: Any],
             let kid = headerJSON["kid"] as? String
         else {
-            throw BuntingError.signatureVerificationFailed
+            throw JWSVerificationError.malformedJWS
         }
 
         guard let keyInfo = publicKeys.first(where: { $0.kid == kid }) else {
-            throw BuntingError.signatureVerificationFailed
+            throw JWSVerificationError.unknownKid(kid)
         }
         let publicKey = try convertPEMToSecKey(keyInfo.pem)
 
@@ -35,8 +35,8 @@ enum JWSVerifier {
         signingInput.append(0x2E) // "."
         signingInput.append(payload)
 
-        guard let signature = base64URLDecode(parts[2]) else {
-            throw BuntingError.signatureVerificationFailed
+        guard let signature = base64URLDecode(parts[2]), signature.isEmpty == false else {
+            throw JWSVerificationError.malformedJWS
         }
 
         var error: Unmanaged<CFError>?
@@ -48,7 +48,7 @@ enum JWSVerifier {
             &error
         )
         if verified == false {
-            throw BuntingError.signatureVerificationFailed
+            throw JWSVerificationError.signatureMismatch
         }
     }
 
@@ -76,7 +76,7 @@ enum JWSVerifier {
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard let der = Data(base64Encoded: base64) else {
-            throw BuntingError.signatureVerificationFailed
+            throw JWSVerificationError.invalidPublicKey
         }
 
         // SecKeyCreateWithData wants a PKCS#1 RSAPublicKey; admin emits SPKI
@@ -91,7 +91,7 @@ enum JWSVerifier {
         var error: Unmanaged<CFError>?
         guard let secKey = SecKeyCreateWithData(pkcs1 as CFData, attributes as CFDictionary, &error)
         else {
-            throw BuntingError.signatureVerificationFailed
+            throw JWSVerificationError.invalidPublicKey
         }
         return secKey
     }

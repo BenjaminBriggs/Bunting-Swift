@@ -1,3 +1,4 @@
+import BuntingVerify
 import XCTest
 
 @testable import Bunting

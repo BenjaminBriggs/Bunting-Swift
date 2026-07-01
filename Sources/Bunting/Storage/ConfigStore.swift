@@ -1,3 +1,4 @@
+import BuntingVerify
 import CryptoKit
 import Foundation
 import OSLog
@@ -166,8 +167,8 @@ actor ConfigStore {
             await notifyDidVerifySignature(success: true)
         } catch {
             await notifyDidVerifySignature(success: false)
-            await notifyDidCompleteFetch(success: false, error: error)
-            throw error
+            await notifyDidCompleteFetch(success: false, error: BuntingError.signatureVerificationFailed)
+            throw BuntingError.signatureVerificationFailed
         }
 
         // Parse configuration
