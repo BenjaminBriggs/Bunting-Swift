@@ -69,6 +69,13 @@ extension BuntingConfiguration {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         schemaVersion = try container.decode(Int.self, forKey: .schemaVersion)
+        guard schemaVersion == 1 else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .schemaVersion,
+                in: container,
+                debugDescription: "Unsupported schema_version \(schemaVersion); this SDK only understands 1"
+            )
+        }
         configVersion = try container.decode(String.self, forKey: .configVersion)
         appIdentifier = try container.decode(String.self, forKey: .appIdentifier)
 

@@ -697,6 +697,13 @@ extension FlagValue {
         if case .double(let value) = self {
             return value
         }
+        // A whole-number double (e.g. 2.0) serializes as `2` in JSON and
+        // decodes as `.integer` (see FlagValue's decode order) — coerce it
+        // back to Double here so double-typed flags don't silently fall
+        // through to the caller's default.
+        if case .integer(let value) = self {
+            return Double(value)
+        }
         return nil
     }
 

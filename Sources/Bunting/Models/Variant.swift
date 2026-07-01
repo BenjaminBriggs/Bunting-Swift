@@ -176,9 +176,14 @@ public enum FlagValue: Codable, Sendable {
         } else if let doubleValue = try? container.decode(Double.self) {
             self = .double(doubleValue)
         } else if let stringValue = try? container.decode(String.self) {
-            // Try to parse as ISO8601 date
+            // Try to parse as ISO8601 date: fractional seconds first (the
+            // admin's timestamp format), then without, matching the
+            // dual-formatter precedent in BuntingConfiguration's published_at.
+            let fractionalFormatter = ISO8601DateFormatter()
+            fractionalFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
             let formatter = ISO8601DateFormatter()
-            if let dateValue = formatter.date(from: stringValue) {
+            formatter.formatOptions = [.withInternetDateTime]
+            if let dateValue = fractionalFormatter.date(from: stringValue) ?? formatter.date(from: stringValue) {
                 self = .date(dateValue)
             } else {
                 // Check if it's JSON (starts with { or [)
