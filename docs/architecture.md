@@ -54,8 +54,7 @@ First match wins. No variant is reconsidered after a match.
 | Type | Operators |
 |---|---|
 | `os_version`, `app_version`, `build_number` | `equals`, `does_not_equals`, `between`, `greater_than`, `greater_than_or_equal`, `less_than`, `less_than_or_equal` |
-| `platform`, `device_model`, `region` | `in`, `not_in` |
-| `locale` | `equals` (exact), `in` / `not_in` (prefix match) |
+| `platform`, `device_model`, `region`, `language` | `in`, `not_in` (exact match) |
 | `custom_attribute` | `custom` — delegates to the app-supplied resolver closure |
 
 Conditions within a list are ANDed. There is no built-in OR; use separate variants with
@@ -120,10 +119,12 @@ The SDK verifies the signature on every successful fetch:
 
 1. Read the compact JWS from the `x-bunting-signature` response header; if absent, issue
    a GET to `<endpoint>.sig`.
-2. Locate the matching public key by `kid` from the `public_keys` array in
+2. Validate the protected header strictly — `alg` must be `RS256`, `b64` must be `false`,
+   and `crit` must be exactly `["b64"]` — before the `kid` is trusted for key lookup.
+3. Locate the matching public key by `kid` from the `public_keys` array in
    `BuntingConfig.plist`.
-3. Verify the RS256 signature over the raw response bytes using `SecKeyVerifySignature`.
-4. On success, persist the config bytes and JWS atomically. On failure, discard the
+4. Verify the RS256 signature over the raw response bytes using `SecKeyVerifySignature`.
+5. On success, persist the config bytes and JWS atomically. On failure, discard the
    response and retain the cache.
 
 `ConfigSource` records where the active configuration came from: `.fetched` (fresh, verified
@@ -145,7 +146,8 @@ then remove the old key in a subsequent app release.
 ```
 
 `contextHash` is a stable hash of the `EvaluationContext` fields that affect condition
-evaluation (platform, OS version, app version, locale, region). The cache is invalidated:
+evaluation (platform, OS version, app version, build number, device model, region, language).
+The cache is invalidated:
 
 - Entirely: on config refresh, environment switch, or `clearAllOverrides()`
 - Per-flag: on `setOverride(_:value:)` or `clearOverride(_:)`

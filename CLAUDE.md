@@ -14,9 +14,11 @@ Sources/
     Models/             # Config, Flag, Variant, Condition data types
     Evaluation/         # FlagEvaluator (stateless), ConditionEvaluator, MemoizationCache
     Storage/            # ConfigStore (actor), OverridesStore (actor)
-    Security/           # JWS/RS256 signature verification
     Identity/           # BuntingIdentity (actor) — iCloud Keychain-backed UUID
     SwiftUI/            # BuntingInfoView, BuntingDebugView, EnvironmentValues
+    Generated/          # Base types (BuntingPaths, FlagDescriptor) the codegen plugin extends
+    Support/            # Logging
+  BuntingVerify/        # JWS/RS256 signature verification — shared by Bunting and bunting-cli
   bunting-cli/          # Executable: fetches config.json from backend (used by FetchConfigPlugin)
   bunting-codegen/      # Executable: generates typed Swift accessors from config JSON
 
@@ -25,7 +27,10 @@ Plugins/
   BuntingCodegenPlugin/ # Build tool plugin — wraps bunting-codegen; runs automatically at build time
 
 Tests/
-  BuntingTests/         # Unit tests (bucketing, evaluation, signature, identity)
+  BuntingTests/         # Unit tests: bucketing, condition evaluation, config store
+                        # transport/caching/fallback, JWS signature verification, config
+                        # fingerprint, test/rollout evaluation, decoding alignment, core
+                        # evaluator/memoization/overrides/facade, codegen, CLI
 
 Example/
   BuntingExample.xcodeproj

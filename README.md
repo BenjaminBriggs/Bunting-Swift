@@ -450,9 +450,10 @@ swift test
 
 Tests cover:
 - Deterministic bucketing algorithm
-- Condition evaluation (platform, version, region, locale)
-- Flag resolution with variant ordering
-- Keychain identity persistence
+- Condition evaluation (platform, version, region, language)
+- Flag resolution, evaluator/memoization/overrides, and config decoding
+- Config store transport, caching, and fallback; JWS signature verification
+- Codegen output and the `bunting-cli`/`bunting-codegen` executables
 
 ## Security
 

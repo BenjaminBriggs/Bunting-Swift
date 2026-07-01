@@ -95,7 +95,7 @@ extension Bunting {
         let bunting: Bunting
         
         public var useNewPaywallDesign: Bool {
-            get async {
+            get {
                 bunting.bool("store/use_new_paywall_design", default: false)
             }
         }
@@ -108,6 +108,14 @@ extension Bunting {
 - Xcode autocomplete for all flags
 - Refactor flags safely
 - Clear documentation of defaults
+
+**Note:** The default baked into each generated accessor comes from the seed's
+**development** environment value for that flag, not the environment the app runs in.
+Date flags always bake `Date()` (evaluated at access time) as a placeholder, since a
+literal date can't be embedded as source. These generated defaults are a last resort —
+at runtime, `Bunting.shared` always evaluates flags against the fetched config for the
+configured environment; the compile-time default is only used if no config (fetched,
+cached, or seed) is available at all.
 
 ## Workflow
 
@@ -125,7 +133,7 @@ extension Bunting {
 let enabled = Bunting.shared.bool("store/use_new_paywall_design", default: false)
 
 // Use typed accessors:
-let enabled = await Bunting.shared.store.useNewPaywallDesign
+let enabled = Bunting.shared.store.useNewPaywallDesign
 ```
 
 ### Before Release
