@@ -38,6 +38,7 @@ public struct BuntingDebugView: View {
     @State private var configVersion: String?
     @State private var publishedAt: Date?
     @State private var signatureVerified = false
+    @State private var configSource: ConfigSource?
     @State private var localID: String = ""
     @State private var environment: String = ""
 
@@ -131,6 +132,7 @@ public struct BuntingDebugView: View {
                 configVersion: configVersion,
                 publishedAt: publishedAt,
                 signatureVerified: signatureVerified,
+                configSource: configSource,
                 localID: localID,
                 lastFetchTime: nil,
                 etag: nil,
@@ -206,6 +208,7 @@ public struct BuntingDebugView: View {
         configVersion = bunting.configVersion
         publishedAt = bunting.publishedAt
         signatureVerified = bunting.signatureVerified
+        configSource = bunting.configSource
         environment = "\(bunting.environment)"
         localID = bunting.localID.uuidString
 

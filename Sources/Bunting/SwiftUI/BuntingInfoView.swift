@@ -35,6 +35,7 @@ public struct BuntingInfoView: View {
     @State private var configVersion: String?
     @State private var publishedAt: Date?
     @State private var signatureVerified = false
+    @State private var configSource: ConfigSource?
     @State private var localID: String = ""
     @State private var environment: String = ""
     @State private var lastFetchTime: Date?
@@ -96,6 +97,7 @@ public struct BuntingInfoView: View {
                 configVersion: configVersion,
                 publishedAt: publishedAt,
                 signatureVerified: signatureVerified,
+                configSource: configSource,
                 localID: localID,
                 lastFetchTime: lastFetchTime,
                 etag: etag,
@@ -165,6 +167,7 @@ public struct BuntingInfoView: View {
         configVersion = bunting.configVersion
         publishedAt = bunting.publishedAt
         signatureVerified = bunting.signatureVerified
+        configSource = bunting.configSource
         environment = "\(bunting.environment)"
 
         // Device identity

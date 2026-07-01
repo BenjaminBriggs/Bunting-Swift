@@ -6,6 +6,7 @@ public struct BuntingDetailsSheet: View {
     let configVersion: String?
     let publishedAt: Date?
     let signatureVerified: Bool
+    let configSource: ConfigSource?
     let localID: String
     let lastFetchTime: Date?
     let etag: String?
@@ -23,6 +24,7 @@ public struct BuntingDetailsSheet: View {
         configVersion: String?,
         publishedAt: Date?,
         signatureVerified: Bool,
+        configSource: ConfigSource? = nil,
         localID: String,
         lastFetchTime: Date?,
         etag: String?,
@@ -35,6 +37,7 @@ public struct BuntingDetailsSheet: View {
         self.configVersion = configVersion
         self.publishedAt = publishedAt
         self.signatureVerified = signatureVerified
+        self.configSource = configSource
         self.localID = localID
         self.lastFetchTime = lastFetchTime
         self.etag = etag
@@ -91,6 +94,9 @@ public struct BuntingDetailsSheet: View {
                             }
                         }
                         .font(.subheadline)
+                    }
+                    if let configSource {
+                        LabeledContent("Source", value: configSource.rawValue.capitalized)
                     }
                 }
                 

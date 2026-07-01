@@ -113,7 +113,18 @@ public final class Bunting {
     // MARK: - Derived Metadata
     public var configVersion: String? { configuration?.configVersion }
     public var publishedAt: Date? { configuration?.publishedAt }
-    public var signatureVerified: Bool { configuration != nil }
+
+    /// Whether the active configuration's detached JWS was cryptographically
+    /// verified by this process — a fresh fetch or a re-verified disk cache.
+    ///
+    /// `false` for the bundled seed (whose integrity story is verification at
+    /// fetch time by `bunting-cli` plus the app bundle's code signature) and
+    /// while no configuration is loaded.
+    public private(set) var signatureVerified: Bool = false
+
+    /// Where the active configuration came from (fetched, cache, or seed).
+    /// `nil` until a configuration has loaded.
+    public private(set) var configSource: ConfigSource?
     public var localID: UUID {
         if let id = cachedLocalID { return id }
         if let t = transientLocalID { return t }
@@ -180,12 +191,14 @@ public final class Bunting {
             await self.overridesStore.loadOverridesIfNeeded()
 
             // Load initial snapshots
-            let config = await self.configStore.getConfiguration()
+            let configState = await self.configStore.getConfigState()
             let overrides = await self.overridesStore.getAllOverrides()
             let id = try? await self.identity.getLocalID()
 
             await MainActor.run {
-                self.configuration = config
+                self.configuration = configState.configuration
+                self.configSource = configState.source
+                self.signatureVerified = configState.signatureVerified
                 self.overridesSnapshot = overrides
                 self.cachedLocalID = id
                 self.transientLocalID = nil
@@ -201,9 +214,11 @@ public final class Bunting {
 
             // Trigger an initial refresh (rate-limited by store)
             try? await self.configStore.refresh()
-            let refreshed = await self.configStore.getConfiguration()
+            let refreshed = await self.configStore.getConfigState()
             await MainActor.run {
-                self.configuration = refreshed
+                self.configuration = refreshed.configuration
+                self.configSource = refreshed.source
+                self.signatureVerified = refreshed.signatureVerified
             }
         }
 
@@ -494,9 +509,11 @@ public final class Bunting {
     /// - Note: This is an async operation that does not block the main thread
     public func refresh() async {
         try? await configStore.refresh()
-        let config = await configStore.getConfiguration()
+        let configState = await configStore.getConfigState()
         await MainActor.run {
-            self.configuration = config
+            self.configuration = configState.configuration
+            self.configSource = configState.source
+            self.signatureVerified = configState.signatureVerified
             // Invalidate cache when configuration changes
             self.memoizationCache.invalidateAll()
         }
