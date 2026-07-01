@@ -152,9 +152,9 @@ Run tests only for specific audiences:
       ],
       "conditions": [
         {
-          "attribute": "platform",
-          "operator": "equals",
-          "value": "iOS"
+          "type": "platform",
+          "operator": "in",
+          "values": ["iOS"]
         }
       ]
     }
@@ -175,9 +175,9 @@ Run tests only for specific audiences:
       ],
       "conditions": [
         {
-          "attribute": "custom",
-          "operator": "equals",
-          "value": "new_user"
+          "type": "custom_attribute",
+          "operator": "custom",
+          "values": ["new_user"]
         }
       ]
     }
@@ -388,13 +388,18 @@ Run different tests based on platform:
 ```json
 {
   "ios_checkout_test": {
-    "conditions": [{"attribute": "platform", "value": "iOS"}]
-  },
-  "android_checkout_test": {
-    "conditions": [{"attribute": "platform", "value": "Android"}]
+    "conditions": [
+      {
+        "type": "platform",
+        "operator": "in",
+        "values": ["iOS"]
+      }
+    ]
   }
 }
 ```
+
+Note: Bunting supports Apple platforms only. Android is not a supported platform value.
 
 ### Test + Killswitch
 
@@ -407,7 +412,13 @@ Combine a test with a killswitch for safety:
       "order": 1,
       "type": "conditional",
       "value": "disabled",
-      "conditions": [{"attribute": "custom", "value": "test_killed"}]
+      "conditions": [
+        {
+          "type": "custom_attribute",
+          "operator": "custom",
+          "values": ["test_killed"]
+        }
+      ]
     },
     {
       "order": 2,

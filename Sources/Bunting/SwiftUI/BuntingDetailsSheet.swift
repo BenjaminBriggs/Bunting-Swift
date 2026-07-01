@@ -52,7 +52,7 @@ public struct BuntingDetailsSheet: View {
                     if let onChangeEnvironment {
                         Picker("Environment", selection: $selectedEnvironment) {
                             Text("Development").tag(BuntingEnvironment.development)
-                            Text("Staging").tag(BuntingEnvironment.staging)
+                            Text("Beta").tag(BuntingEnvironment.beta)
                             Text("Production").tag(BuntingEnvironment.production)
                         }
                         #if os(iOS)
@@ -143,7 +143,7 @@ public struct BuntingDetailsSheet: View {
                             }
                             Button("Cancel", role: .cancel) {}
                         } message: {
-                            Text("This will generate a new UUID and may change cohort assignments and rollout buckets.")
+                            Text("This will generate a new UUID and may change rollout buckets.")
                         }
                     }
                 } header: {
@@ -194,7 +194,7 @@ public struct BuntingDetailsSheet: View {
 
 #Preview("Unverified — Minimal Data") {
     BuntingDetailsSheet(
-        environment: .staging,
+        environment: .beta,
         configVersion: nil,
         publishedAt: nil,
         signatureVerified: false,

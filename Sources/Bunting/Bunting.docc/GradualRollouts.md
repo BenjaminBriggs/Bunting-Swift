@@ -22,7 +22,7 @@ Rollout bucketing is deterministic and stable:
 3. **Compare** bucket to rollout percentage
 4. **Return** value if bucket ≤ percentage
 
-**Key property:** Users with buckets 1-10 will always be in a 10% rollout, 25% rollout, 50% rollout, etc. This ensures stable cohorts as you increase percentages.
+**Key property:** Users with buckets 1-10 will always be in a 10% rollout, 25% rollout, 50% rollout, etc. This ensures stable user groups as you increase percentages.
 
 ## Basic Rollout Setup
 
@@ -119,7 +119,7 @@ A common safe rollout progression:
 {"percentage": 50}
 ```
 - Half of users on new feature
-- Compare metrics between cohorts
+- Compare metrics between groups
 - Final validation before full rollout
 
 **Week 3: 100% rollout**
@@ -167,14 +167,22 @@ Roll out to iOS first, then other platforms:
       "salt": "feature_ios_2024",
       "percentage": 50,
       "conditions": [
-        {"attribute": "platform", "operator": "equals", "value": "iOS"}
+        {
+          "type": "platform",
+          "operator": "in",
+          "values": ["iOS"]
+        }
       ]
     },
     "macos_rollout": {
       "salt": "feature_macos_2024",
       "percentage": 10,
       "conditions": [
-        {"attribute": "platform", "operator": "equals", "value": "macOS"}
+        {
+          "type": "platform",
+          "operator": "in",
+          "values": ["macOS"]
+        }
       ]
     }
   }
@@ -193,9 +201,9 @@ Deploy to newer app versions first:
       "percentage": 50,
       "conditions": [
         {
-          "attribute": "app_version",
+          "type": "app_version",
           "operator": "greater_than_or_equal",
-          "value": "2.0.0"
+          "values": ["2.0.0"]
         }
       ]
     }
@@ -214,7 +222,11 @@ Test in specific markets first:
       "salt": "feature_us_2024",
       "percentage": 100,
       "conditions": [
-        {"attribute": "region", "operator": "equals", "value": "US"}
+        {
+          "type": "region",
+          "operator": "in",
+          "values": ["US"]
+        }
       ]
     },
     "global_rollout": {
@@ -282,7 +294,7 @@ class RolloutMonitor: BuntingEventsDelegate {
 }
 ```
 
-### Track Metrics by Cohort
+### Track Metrics by Group
 
 Compare metrics between rolled-out and control groups:
 
@@ -291,7 +303,7 @@ let hasNewFeature = Bunting.shared.bool("feature/new_checkout", default: false)
 
 Analytics.setUserProperty("checkout_version", value: hasNewFeature ? "v2" : "v1")
 
-// Track conversion rates split by cohort
+// Track conversion rates split by group
 Analytics.log("checkout_completed", properties: [
     "version": hasNewFeature ? "v2" : "v1",
     "revenue": purchaseAmount
@@ -338,7 +350,11 @@ Disable for specific platforms while investigating:
       "type": "conditional",
       "value": false,
       "conditions": [
-        {"attribute": "platform", "operator": "equals", "value": "iOS"}
+        {
+          "type": "platform",
+          "operator": "in",
+          "values": ["iOS"]
+        }
       ]
     },
     {
@@ -367,7 +383,11 @@ Give beta users early access, then roll out to everyone:
       "type": "conditional",
       "value": true,
       "conditions": [
-        {"attribute": "custom", "operator": "equals", "value": "beta_tester"}
+        {
+          "type": "custom_attribute",
+          "operator": "custom",
+          "values": ["beta_tester"]
+        }
       ]
     },
     {
@@ -392,14 +412,26 @@ Roll out to each platform at different speeds:
       "type": "rollout",
       "value": true,
       "rollout": "ios_rollout",
-      "conditions": [{"attribute": "platform", "value": "iOS"}]
+      "conditions": [
+        {
+          "type": "platform",
+          "operator": "in",
+          "values": ["iOS"]
+        }
+      ]
     },
     {
       "order": 2,
       "type": "rollout",
       "value": true,
       "rollout": "macos_rollout",
-      "conditions": [{"attribute": "platform", "value": "macOS"}]
+      "conditions": [
+        {
+          "type": "platform",
+          "operator": "in",
+          "values": ["macOS"]
+        }
+      ]
     }
   ]
 }
@@ -516,7 +548,7 @@ Before starting a rollout:
 - [ ] Test both enabled and disabled states
 - [ ] Identify rollback triggers (error rate, crash rate, etc.)
 - [ ] Communicate rollout schedule to team
-- [ ] Set up analytics tracking for cohort comparison
+- [ ] Set up analytics tracking for group comparison
 - [ ] Have on-call engineer ready during initial rollout
 
 During rollout:

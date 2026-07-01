@@ -40,7 +40,7 @@ struct TestAndRolloutEvaluationTests {
             type: .boolean,
             description: nil,
             development: EnvironmentConfig(default: .boolean(false), variants: [variant]),
-            staging: EnvironmentConfig(default: .boolean(false), variants: []),
+            beta: EnvironmentConfig(default: .boolean(false), variants: []),
             production: EnvironmentConfig(default: .boolean(false), variants: [])
         )
 
@@ -50,7 +50,6 @@ struct TestAndRolloutEvaluationTests {
             publishedAt: Date(),
             appIdentifier: "test-app",
             flags: ["test_flag": flag],
-            cohorts: [:],
             tests: ["button_test": test],
             rollouts: [:]
         )
@@ -62,7 +61,7 @@ struct TestAndRolloutEvaluationTests {
             buildNumber: "1",
             deviceModel: "iPhone",
             region: "US",
-            locale: "en-US"
+            language: "en"
         )
 
         // Test with 100 different UUIDs - should get roughly 50/50 split
@@ -124,7 +123,7 @@ struct TestAndRolloutEvaluationTests {
             type: .string,
             description: nil,
             development: EnvironmentConfig(default: .string("default"), variants: [variant]),
-            staging: EnvironmentConfig(default: .string("default"), variants: []),
+            beta: EnvironmentConfig(default: .string("default"), variants: []),
             production: EnvironmentConfig(default: .string("default"), variants: [])
         )
 
@@ -134,7 +133,6 @@ struct TestAndRolloutEvaluationTests {
             publishedAt: Date(),
             appIdentifier: "test-app",
             flags: ["feature": flag],
-            cohorts: [:],
             tests: ["feature_test": test],
             rollouts: [:]
         )
@@ -146,7 +144,7 @@ struct TestAndRolloutEvaluationTests {
             buildNumber: "1",
             deviceModel: "iPhone",
             region: "US",
-            locale: "en-US"
+            language: "en"
         )
 
         let localID = UUID()
@@ -183,7 +181,6 @@ struct TestAndRolloutEvaluationTests {
             salt: "ios-test-salt",
             conditions: [
                 Condition(
-                    id: "platform-ios",
                     type: .platform,
                     values: ["iOS"],
                     operator: .in
@@ -212,7 +209,7 @@ struct TestAndRolloutEvaluationTests {
             type: .boolean,
             description: nil,
             development: EnvironmentConfig(default: .boolean(false), variants: [variant]),
-            staging: EnvironmentConfig(default: .boolean(false), variants: []),
+            beta: EnvironmentConfig(default: .boolean(false), variants: []),
             production: EnvironmentConfig(default: .boolean(false), variants: [])
         )
 
@@ -222,7 +219,6 @@ struct TestAndRolloutEvaluationTests {
             publishedAt: Date(),
             appIdentifier: "test-app",
             flags: ["ios_feature": flag],
-            cohorts: [:],
             tests: ["ios_only_test": test],
             rollouts: [:]
         )
@@ -235,7 +231,7 @@ struct TestAndRolloutEvaluationTests {
             buildNumber: "1",
             deviceModel: "Mac",
             region: "US",
-            locale: "en-US"
+            language: "en"
         )
 
         let evaluator1 = FlagEvaluator(
@@ -257,7 +253,7 @@ struct TestAndRolloutEvaluationTests {
             buildNumber: "1",
             deviceModel: "iPhone",
             region: "US",
-            locale: "en-US"
+            language: "en"
         )
 
         let evaluator2 = FlagEvaluator(
@@ -300,7 +296,7 @@ struct TestAndRolloutEvaluationTests {
             type: .boolean,
             description: nil,
             development: EnvironmentConfig(default: .boolean(false), variants: [variant]),
-            staging: EnvironmentConfig(default: .boolean(false), variants: []),
+            beta: EnvironmentConfig(default: .boolean(false), variants: []),
             production: EnvironmentConfig(default: .boolean(false), variants: [])
         )
 
@@ -310,7 +306,6 @@ struct TestAndRolloutEvaluationTests {
             publishedAt: Date(),
             appIdentifier: "test-app",
             flags: ["rollout_flag": flag],
-            cohorts: [:],
             tests: [:],
             rollouts: ["test_rollout": rollout]
         )
@@ -322,7 +317,7 @@ struct TestAndRolloutEvaluationTests {
             buildNumber: "1",
             deviceModel: "iPhone",
             region: "US",
-            locale: "en-US"
+            language: "en"
         )
 
         var inRolloutCount = 0
@@ -370,7 +365,7 @@ struct TestAndRolloutEvaluationTests {
             type: .integer,
             description: nil,
             development: EnvironmentConfig(default: .integer(0), variants: [variant]),
-            staging: EnvironmentConfig(default: .integer(0), variants: []),
+            beta: EnvironmentConfig(default: .integer(0), variants: []),
             production: EnvironmentConfig(default: .integer(0), variants: [])
         )
 
@@ -380,7 +375,6 @@ struct TestAndRolloutEvaluationTests {
             publishedAt: Date(),
             appIdentifier: "test-app",
             flags: ["rollout_number": flag],
-            cohorts: [:],
             tests: [:],
             rollouts: ["stable_rollout": rollout]
         )
@@ -392,7 +386,7 @@ struct TestAndRolloutEvaluationTests {
             buildNumber: "1",
             deviceModel: "iPhone",
             region: "US",
-            locale: "en-US"
+            language: "en"
         )
 
         let localID = UUID()

@@ -88,28 +88,28 @@ The main view demonstrates flag access patterns:
 
 ```swift
 // Boolean flags
-let enabled = await bunting.bool("feature/enabled", default: false)
+let enabled = bunting.bool("feature/enabled", default: false)
 
 // String flags
-let message = await bunting.string("ui/message", default: "Hello")
+let message = bunting.string("ui/message", default: "Hello")
 
 // Integer flags
-let size = await bunting.int("limits/upload", default: 25)
+let size = bunting.int("limits/upload", default: 25)
 
 // Double flags (percentages, decimals)
-let discount = await bunting.double("pricing/discount", default: 0.10)
+let discount = bunting.double("pricing/discount", default: 0.10)
 
 // Date flags
-let deadline = await bunting.date("events/deadline", default: Date())
+let deadline = bunting.date("events/deadline", default: Date())
 
 // JSON flags
-if let data = await bunting.jsonData("config/layout") {
+if let data = bunting.jsonData("config/layout") {
     let config = try? JSONDecoder().decode(LayoutConfig.self, from: data)
 }
 ```
 
 **Key Points:**
-- All accessors are `async` (use `await`)
+- Flag accessors are synchronous (`@MainActor`) — no `await` needed; only `refresh()` and `resetIdentity()` are `async`
 - Always provide a `default` value
 - Use flag keys with namespaces (e.g., `"feature/enabled"`)
 - Default values are used when flags don't exist or can't be evaluated
@@ -120,27 +120,27 @@ The debug panel provides testing capabilities:
 
 **Configuration Inspection:**
 ```swift
-let version = await bunting.configVersion
-let published = await bunting.publishedAt
-let verified = await bunting.signatureVerified
+let version = bunting.configVersion
+let published = bunting.publishedAt
+let verified = bunting.signatureVerified
 ```
 
 **Identity Management:**
 ```swift
-let id = await bunting.localID
-try await bunting.resetIdentity()  // Generates new UUID
+let id = bunting.localID
+try await bunting.resetIdentity()  // async — generates new UUID
 ```
 
 **Local Overrides:**
 ```swift
 // Set override (takes precedence over backend value)
-await bunting.setOverride("feature/enabled", value: true)
+bunting.setOverride("feature/enabled", value: true)
 
 // Clear specific override
-await bunting.clearOverride("feature/enabled")
+bunting.clearOverride("feature/enabled")
 
 // Clear all overrides
-await bunting.clearAllOverrides()
+bunting.clearAllOverrides()
 ```
 
 **Key Points:**
@@ -190,7 +190,7 @@ Configuration file for the SDK:
 ```swift
 // Bunting supports three environments
 try? Bunting.configure(environment: .development)  // Dev flags
-try? Bunting.configure(environment: .staging)      // Staging flags
+try? Bunting.configure(environment: .beta)      // Beta flags
 try? Bunting.configure(environment: .production)   // Production flags
 ```
 
@@ -259,7 +259,7 @@ For development, you can run a local backend:
 2. Run your Bunting admin locally
 3. Publish test configurations
 
-### Testing Different Cohorts
+### Testing Different Buckets
 
 1. Open Debug Panel
 2. Note your current Local ID
@@ -332,7 +332,7 @@ For development, you can run a local backend:
 
 2. In `loadFlags()`, fetch the value:
    ```swift
-   myNewFlag = await bunting.bool("my/new_flag", default: false)
+   myNewFlag = bunting.bool("my/new_flag", default: false)
    ```
 
 3. In the UI, display it:

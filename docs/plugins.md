@@ -95,7 +95,7 @@ extension Bunting {
         
         public var useNewPaywallDesign: Bool {
             get async {
-                await bunting.bool("store/use_new_paywall_design", default: false)
+                bunting.bool("store/use_new_paywall_design", default: false)
             }
         }
     }
@@ -121,7 +121,7 @@ extension Bunting {
 
 ```swift
 // Instead of string keys:
-let enabled = await Bunting.shared.bool("store/use_new_paywall_design", default: false)
+let enabled = Bunting.shared.bool("store/use_new_paywall_design", default: false)
 
 // Use typed accessors:
 let enabled = await Bunting.shared.store.useNewPaywallDesign

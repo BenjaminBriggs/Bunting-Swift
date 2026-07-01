@@ -5,13 +5,13 @@
   "app_identifier": "com.example.buntingexample",
   "flags": {
     "store/use_new_paywall_design": {
-      "type": "boolean",
+      "type": "bool",
       "description": "Enable the new paywall design",
       "development": {
         "defaultdefault": false,
         "variants": []
       },
-      "staging": {
+      "beta": {
         "defaultdefault": true,
         "variants": []
       },
@@ -21,13 +21,13 @@
       }
     },
     "store/subscription_discount": {
-      "type": "integer",
+      "type": "int",
       "description": "Percentage discount for subscriptions",
       "development": {
         "default": 20,
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": 15,
         "variants": []
       },
@@ -43,7 +43,7 @@
         "default": 1.0,
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": 1.0,
         "variants": []
       },
@@ -59,7 +59,7 @@
         "default": "50% Off - Limited Time!",
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": "Special Offer - Save Now",
         "variants": []
       },
@@ -75,7 +75,7 @@
         "default": "2025-12-31T23:59:59Z",
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": "2025-12-31T23:59:59Z",
         "variants": []
       },
@@ -91,7 +91,7 @@
         "default": "#007AFF",
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": "#007AFF",
         "variants": []
       },
@@ -107,7 +107,7 @@
         "default": "Welcome to Bunting!",
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": "Welcome to Bunting!",
         "variants": []
       },
@@ -117,13 +117,13 @@
       }
     },
     "ui/enable_animations": {
-      "type": "boolean",
+      "type": "bool",
       "description": "Enable UI animations",
       "development": {
         "default": true,
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": true,
         "variants": []
       },
@@ -133,13 +133,13 @@
       }
     },
     "features/show_onboarding": {
-      "type": "boolean",
+      "type": "bool",
       "description": "Show onboarding flow to new users",
       "development": {
         "default": true,
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": true,
         "variants": []
       },
@@ -149,13 +149,13 @@
       }
     },
     "features/max_items": {
-      "type": "integer",
+      "type": "int",
       "description": "Maximum items per page",
       "development": {
         "default": 50,
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": 25,
         "variants": []
       },
@@ -165,13 +165,13 @@
       }
     },
     "features/max_upload_size": {
-      "type": "integer",
+      "type": "int",
       "description": "Maximum upload size in MB",
       "development": {
         "default": 100,
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": 50,
         "variants": []
       },
@@ -187,7 +187,7 @@
         "default": 0.25,
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": 0.15,
         "variants": []
       },
@@ -203,7 +203,7 @@
         "default": "{\"sections\":[\"featured\",\"recent\",\"recommended\"]}",
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": "{\"sections\":[\"featured\",\"recent\",\"recommended\"]}",
         "variants": []
       },
@@ -213,7 +213,6 @@
       }
     }
   },
-  "cohorts": {},
   "tests": {},
   "rollouts": {}
 }

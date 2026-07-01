@@ -21,8 +21,10 @@ struct Flag: Decodable {
     let type: String
     let description: String?
     let development: EnvironmentConfig
-    let staging: EnvironmentConfig
+    let beta: EnvironmentConfig
     let production: EnvironmentConfig
+    // Optional in the artifact; absent for non-archived flags.
+    let deprecated: Bool?
 }
 
 struct EnvironmentConfig: Decodable {
@@ -353,6 +355,12 @@ struct CodeGenerator {
         }
         output += "\(indentStr)/// Flag key: `\(actualKey)`\n"
         output += "\(indentStr)/// Type: `\(flag.type)`\n"
+
+        // Archived flags carry a deprecation marker — surface it to consumers as a
+        // compiler warning so they clean up call sites before the flag is deleted.
+        if flag.deprecated == true {
+            output += "\(indentStr)@available(*, deprecated, message: \"Flag archived\")\n"
+        }
 
         // Generate property
         output += "\(indentStr)var \(propertyName): \(swiftType) {\n"

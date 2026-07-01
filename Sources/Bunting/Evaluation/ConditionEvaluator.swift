@@ -4,7 +4,6 @@ import Foundation
 struct ConditionEvaluator {
     let context: EvaluationContext
     let customAttributeResolver: EvaluationContext.CustomAttributeResolver
-    let cohorts: [String: Cohort]
 
     /// Evaluates a single condition
     func evaluate(_ condition: Condition) -> Bool {
@@ -28,11 +27,8 @@ struct ConditionEvaluator {
             guard let region = context.region else { return false }
             return evaluateList(condition, contextValue: region)
 
-        case .locale:
-            return evaluateLocale(condition, contextValue: context.locale)
-
-        case .cohort:
-            return evaluateCohort(condition)
+        case .language:
+            return evaluateList(condition, contextValue: context.language)
 
         case .customAttribute:
             guard let attributeName = condition.values.first else { return false }
@@ -162,55 +158,6 @@ struct ConditionEvaluator {
 
         case .notIn:
             return condition.values.contains(contextValue) == false
-
-        default:
-            return false
-        }
-    }
-
-    // MARK: - Locale Comparison
-
-    private func evaluateLocale(_ condition: Condition, contextValue: String) -> Bool {
-        switch condition.operator {
-        case .equals:
-            // Exact match
-            return condition.values.contains(contextValue)
-
-        case .in:
-            // Prefix match (e.g., "en" matches "en_GB", "en_US")
-            return condition.values.contains { targetLocale in
-                contextValue.hasPrefix(targetLocale)
-            }
-
-        case .notIn:
-            return condition.values.contains { targetLocale in
-                contextValue.hasPrefix(targetLocale)
-            } == false
-
-        default:
-            return false
-        }
-    }
-
-    // MARK: - Cohort Evaluation
-
-    private func evaluateCohort(_ condition: Condition) -> Bool {
-        guard condition.values.count > 0 else { return false }
-
-        switch condition.operator {
-        case .in:
-            // User must be in at least one of the specified cohorts
-            return condition.values.contains { cohortName in
-                guard let cohort = cohorts[cohortName] else { return false }
-                return evaluateAll(cohort.conditions)
-            }
-
-        case .notIn:
-            // User must not be in any of the specified cohorts
-            return condition.values.contains { cohortName in
-                guard let cohort = cohorts[cohortName] else { return true }
-                return evaluateAll(cohort.conditions)
-            } == false
 
         default:
             return false

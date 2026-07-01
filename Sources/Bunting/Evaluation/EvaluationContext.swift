@@ -12,7 +12,7 @@ import Foundation
 ///
 /// `EvaluationContext` contains all stable device and app information that affects
 /// flag evaluation. It includes platform, OS version, app version, device model,
-/// and locale information.
+/// and language information.
 ///
 /// The context is used to:
 /// - Evaluate conditional variants based on platform/version/device constraints
@@ -55,10 +55,11 @@ public struct EvaluationContext: Sendable, Hashable {
     /// Used for region-specific features, pricing, or compliance rules.
     public let region: String?
 
-    /// The user's locale identifier (e.g., "en_US", "fr_FR")
+    /// The user's language code (e.g., "en", "es", "fr")
     ///
-    /// Used for locale-specific content or RTL language support.
-    public let locale: String
+    /// Derived from the device locale's language component. Used for
+    /// language-specific feature targeting.
+    public let language: String
 
     /// Creates an evaluation context with explicit values
     ///
@@ -68,8 +69,8 @@ public struct EvaluationContext: Sendable, Hashable {
     ///   - appVersion: App version string
     ///   - buildNumber: Build number string
     ///   - deviceModel: Device model string
-    ///   - region: User's region identifier
-    ///   - locale: User's locale identifier
+    ///   - region: User's region identifier (country code)
+    ///   - language: User's language code
     public init(
         platform: String,
         osVersion: String,
@@ -77,7 +78,7 @@ public struct EvaluationContext: Sendable, Hashable {
         buildNumber: String,
         deviceModel: String,
         region: String?,
-        locale: String
+        language: String
     ) {
         self.platform = platform
         self.osVersion = osVersion
@@ -85,7 +86,7 @@ public struct EvaluationContext: Sendable, Hashable {
         self.buildNumber = buildNumber
         self.deviceModel = deviceModel
         self.region = region
-        self.locale = locale
+        self.language = language
     }
 
     /// Resolver for custom flag attributes
@@ -94,7 +95,7 @@ public struct EvaluationContext: Sendable, Hashable {
     /// Return `true` if the attribute is enabled, `false` otherwise.
     ///
     /// Used by conditional variants to implement custom logic beyond the built-in
-    /// platform/version/device/locale checks. For example:
+    /// platform/version/device/language checks. For example:
     /// ```swift
     /// { attribute in
     ///     switch attribute {
@@ -121,13 +122,13 @@ public struct EvaluationContext: Sendable, Hashable {
         hasher.combine(buildNumber)
         hasher.combine(deviceModel)
         hasher.combine(region)
-        hasher.combine(locale)
+        hasher.combine(language)
         return hasher.finalize()
     }
 
     /// Creates an evaluation context with current system information
     ///
-    /// Automatically detects the current platform, OS version, device model, and locale.
+    /// Automatically detects the current platform, OS version, device model, region, and language.
     /// App version and build number are read from `Info.plist` unless explicitly provided.
     ///
     /// This is the recommended way to create a context for normal app usage.
@@ -182,7 +183,7 @@ public struct EvaluationContext: Sendable, Hashable {
         let resolvedBuildNumber =
             buildNumber ?? (infoDictionary?["CFBundleVersion"] as? String) ?? "1"
 
-        let locale = Locale.current.identifier
+        let language = Locale.current.language.languageCode?.identifier ?? "en"
         let region = Locale.current.region?.identifier
 
         return EvaluationContext(
@@ -192,7 +193,7 @@ public struct EvaluationContext: Sendable, Hashable {
             buildNumber: resolvedBuildNumber,
             deviceModel: deviceModel,
             region: region,
-            locale: locale
+            language: language
         )
     }
 }

@@ -79,6 +79,16 @@ public protocol BuntingEventsDelegate: AnyObject, Sendable {
     ///   - flagKey: The key of the flag being overridden
     ///   - value: The new override value, or nil if the override is being cleared
     func didChangeOverride(flagKey: String, value: Any?)
+
+    /// Called the first time a deprecated (archived) flag is read for a given
+    /// configuration.
+    ///
+    /// Archived flags are still served so existing clients keep working, but they
+    /// are scheduled for removal. Use this to surface that an app is still reading a
+    /// flag it should migrate off. Fires at most once per flag key per loaded config.
+    ///
+    /// - Parameter flagKey: The key of the deprecated flag that was read
+    func didReadDeprecatedFlag(flagKey: String)
 }
 
 // MARK: - Optional Methods
@@ -92,4 +102,5 @@ extension BuntingEventsDelegate {
     public func didLoadCachedConfig(version: String) {}
     public func didFallbackToDefault(flagKey: String) {}
     public func didChangeOverride(flagKey: String, value: Any?) {}
+    public func didReadDeprecatedFlag(flagKey: String) {}
 }

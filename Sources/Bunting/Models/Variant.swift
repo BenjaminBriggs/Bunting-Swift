@@ -56,9 +56,8 @@ public struct Variant: Codable, Sendable {
     /// - OS version
     /// - App version
     /// - Device model
-    /// - Locale/region
+    /// - Language/region
     /// - Custom attributes
-    /// - Cohort membership
     public let conditions: [Condition]?
 
     /// Test name for test variants
@@ -111,7 +110,7 @@ public struct Variant: Codable, Sendable {
 public enum VariantType: String, Codable, Sendable {
     /// Conditional variant: return value if conditions match
     ///
-    /// Used for simple logic like "show this value if user is in beta_users cohort"
+    /// Used for simple logic like "show this value in the US and Canada"
     /// or "show this value on iOS 18+".
     case conditional
 

@@ -25,14 +25,15 @@ Or in Xcode:
 
 ## Create Bootstrap Configuration
 
-Create a file named `BuntingBootstrap.plist` in your app bundle with your CDN configuration:
+Create a file named `BuntingConfig.plist` in your app bundle with your CDN configuration
+(ensure **Target Membership** is checked in Xcode):
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>config_url</key>
+    <key>endpoint_url</key>
     <string>https://your-cdn.com/config.json</string>
     <key>public_keys</key>
     <array>
@@ -45,6 +46,13 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...
 -----END PUBLIC KEY-----</string>
         </dict>
     </array>
+    <key>fetch_policy</key>
+    <dict>
+        <key>min_interval_seconds</key>
+        <integer>300</integer>
+        <key>hard_ttl_days</key>
+        <integer>7</integer>
+    </dict>
 </dict>
 </plist>
 ```
@@ -153,7 +161,7 @@ struct ContentView: View {
                 }
                 .sheet(isPresented: $showingDebugPanel) {
                     NavigationStack {
-                        BuntingDebugView(bunting: .shared)
+                        BuntingDebugView()
                     }
                 }
         }

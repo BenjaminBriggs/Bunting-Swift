@@ -3,31 +3,15 @@
   "config_version": "2025-11-12.1",
   "published_at": "2025-11-12T15:42:19.972Z",
   "app_identifier": "feast",
-  "cohorts": {
-    "uk_users": {
-      "name": "UK Users",
-      "description": "",
-      "conditions": [
-        {
-          "id": "condition_1762962005474_6hc47r8t9",
-          "type": "region",
-          "values": [
-            "UK"
-          ],
-          "operator": "in"
-        }
-      ]
-    }
-  },
   "flags": {
     "advanced_cook_mode": {
-      "type": "boolean",
+      "type": "bool",
       "description": "",
       "development": {
         "default": false,
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": false,
         "variants": []
       },
@@ -37,13 +21,13 @@
       }
     },
     "all_recipes_are_free": {
-      "type": "boolean",
+      "type": "bool",
       "description": "",
       "development": {
         "default": true,
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": false,
         "variants": []
       },
@@ -56,7 +40,6 @@
             "value": true,
             "conditions": [
               {
-                "id": "1762961812758-umub4jj",
                 "type": "custom_attribute",
                 "values": [
                   "premium-user"
@@ -75,7 +58,7 @@
         "default": "{\n    \"live\": \"feast.api.theguardian.com\",\n    \"code\": \"feast.code-api.theguardian.com\"\n}",
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": "{\n    \"live\": \"feast.api.theguardian.com\",\n    \"code\": \"feast.code-api.theguardian.com\"\n}",
         "variants": []
       },
@@ -85,13 +68,13 @@
       }
     },
     "enable_advanced_collections": {
-      "type": "boolean",
+      "type": "bool",
       "description": "",
       "development": {
         "default": false,
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": false,
         "variants": []
       },
@@ -101,13 +84,13 @@
       }
     },
     "maximum_number_of_saved_recipes": {
-      "type": "integer",
+      "type": "int",
       "description": "",
       "development": {
         "default": 9999,
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": 1000,
         "variants": []
       },
@@ -123,7 +106,7 @@
         "default": "9999-11-14T00:00:00.000Z",
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": "2025-11-14T00:00:00.000Z",
         "variants": []
       },
@@ -139,7 +122,7 @@
         "default": 0.1,
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": 0.1,
         "variants": []
       },
@@ -160,13 +143,13 @@
       }
     },
     "show_shopping_list": {
-      "type": "boolean",
+      "type": "bool",
       "description": "",
       "development": {
         "default": false,
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": false,
         "variants": []
       },
@@ -189,7 +172,7 @@
         "default": "https://manage.theguardian.com/help-centre/article/guardian-feast-app",
         "variants": []
       },
-      "staging": {
+      "beta": {
         "default": "https://manage.theguardian.com/help-centre/article/guardian-feast-app",
         "variants": []
       },

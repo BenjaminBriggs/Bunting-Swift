@@ -25,8 +25,7 @@ struct FlagEvaluator {
         let envConfig = flag.config(for: environment)
         let conditionEvaluator = ConditionEvaluator(
             context: context,
-            customAttributeResolver: customAttributeResolver,
-            cohorts: configuration.cohorts
+            customAttributeResolver: customAttributeResolver
         )
 
         // Sort variants by order (ascending)
@@ -125,5 +124,101 @@ struct FlagEvaluator {
 
         // Check if bucket qualifies for rollout
         return bucket <= rollout.percentage
+    }
+
+    // MARK: - Fingerprint Path Resolution
+
+    /// The number of terminal resolution paths a flag has in the active environment.
+    ///
+    /// Matches the admin fingerprint enumeration length: `1` (environment default)
+    /// plus, per variant, `1` for conditional/rollout and one per group for a test.
+    func pathCount(flagKey: String) -> Int {
+        guard let flag = configuration.flags[flagKey] else { return 1 }
+        var count = 1  // environment default
+        for variant in flag.config(for: environment).variants {
+            count += variantPathCount(variant)
+        }
+        return count
+    }
+
+    private func variantPathCount(_ variant: Variant) -> Int {
+        switch variant.type {
+        case .conditional, .rollout:
+            return 1
+        case .test:
+            return variant.test.flatMap { configuration.tests[$0]?.groups?.count } ?? 0
+        }
+    }
+
+    /// The index of the winning terminal path for a flag (0 == environment default).
+    ///
+    /// Mirrors ``evaluate(flagKey:)`` but records *which* enumerated path won rather
+    /// than its value, so the result can be encoded into a config fingerprint the
+    /// admin can decode. Local overrides are not considered here. Assumes well-formed
+    /// test variants (each assigned group has a value); malformed configs may resolve
+    /// to the default.
+    func resolvePathIndex(flagKey: String) -> Int {
+        guard let flag = configuration.flags[flagKey] else { return 0 }
+        let envConfig = flag.config(for: environment)
+        let conditionEvaluator = ConditionEvaluator(
+            context: context,
+            customAttributeResolver: customAttributeResolver
+        )
+        let sortedVariants = envConfig.variants.sorted { $0.order < $1.order }
+
+        var base = 1  // paths[0] is the default; variants start at index 1
+        for variant in sortedVariants {
+            switch variant.type {
+            case .conditional:
+                if let conditions = variant.conditions,
+                    conditionEvaluator.evaluateAll(conditions),
+                    variant.value != nil
+                {
+                    return base
+                }
+                base += 1
+
+            case .rollout:
+                if let rolloutName = variant.rollout,
+                    let rollout = configuration.rollouts[rolloutName],
+                    evaluateRollout(rollout, conditionEvaluator: conditionEvaluator),
+                    variant.value != nil
+                {
+                    return base
+                }
+                base += 1
+
+            case .test:
+                let groupCount =
+                    variant.test.flatMap { configuration.tests[$0]?.groups?.count } ?? 0
+                if let testName = variant.test,
+                    let test = configuration.tests[testName],
+                    let groupIndex = matchedTestGroupIndex(
+                        test, conditionEvaluator: conditionEvaluator)
+                {
+                    return base + groupIndex
+                }
+                base += groupCount
+            }
+        }
+
+        return 0  // no variant matched → environment default
+    }
+
+    /// The index within `test.groups` of the group this client buckets into, or `nil`
+    /// if the test's preconditions fail or the bucket falls outside all groups.
+    private func matchedTestGroupIndex(
+        _ test: Test,
+        conditionEvaluator: ConditionEvaluator
+    ) -> Int? {
+        if test.conditions.isEmpty == false
+            && conditionEvaluator.evaluateAll(test.conditions) == false
+        {
+            return nil
+        }
+        guard let groups = test.groups, groups.isEmpty == false else { return nil }
+        let bucket = Bucketing.bucket(salt: test.salt, localID: localID)
+        guard let groupName = test.assignGroup(bucket: bucket) else { return nil }
+        return groups.firstIndex { $0.name == groupName }
     }
 }

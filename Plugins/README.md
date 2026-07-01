@@ -93,13 +93,13 @@ extension Bunting {
         
         public var useNewPaywallDesign: Bool {
             get async {
-                await bunting.bool("store/use_new_paywall_design", default: false)
+                bunting.bool("store/use_new_paywall_design", default: false)
             }
         }
         
         public var paywallTitle: String {
             get async {
-                await bunting.string("store/paywall_title", default: "Upgrade Now")
+                bunting.string("store/paywall_title", default: "Upgrade Now")
             }
         }
     }
@@ -110,7 +110,7 @@ extension Bunting {
 
 Instead of using string keys:
 ```swift
-let enabled = await Bunting.shared.bool("store/use_new_paywall_design", default: false)
+let enabled = Bunting.shared.bool("store/use_new_paywall_design", default: false)
 ```
 
 Use strongly-typed accessors:

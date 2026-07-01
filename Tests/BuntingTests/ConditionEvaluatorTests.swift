@@ -14,19 +14,17 @@ final class ConditionEvaluatorTests: XCTestCase {
             buildNumber: "100",
             deviceModel: "iPhone",
             region: "US",
-            locale: "en_US"
+            language: "en"
         )
     }
 
     func testPlatformCondition() {
         let evaluator = ConditionEvaluator(
             context: context,
-            customAttributeResolver: { _ in false },
-            cohorts: [:]
+            customAttributeResolver: { _ in false }
         )
 
         let condition = Condition(
-            id: "platform-ios",
             type: .platform,
             values: ["iOS", "iPadOS"],
             operator: .in
@@ -38,12 +36,10 @@ final class ConditionEvaluatorTests: XCTestCase {
     func testPlatformNotIn() {
         let evaluator = ConditionEvaluator(
             context: context,
-            customAttributeResolver: { _ in false },
-            cohorts: [:]
+            customAttributeResolver: { _ in false }
         )
 
         let condition = Condition(
-            id: "platform-not-android",
             type: .platform,
             values: ["Android", "Web"],
             operator: .notIn
@@ -55,12 +51,10 @@ final class ConditionEvaluatorTests: XCTestCase {
     func testAppVersionGreaterThanOrEqual() {
         let evaluator = ConditionEvaluator(
             context: context,
-            customAttributeResolver: { _ in false },
-            cohorts: [:]
+            customAttributeResolver: { _ in false }
         )
 
         let condition = Condition(
-            id: "version-gte",
             type: .appVersion,
             values: ["2.0.0"],
             operator: .greaterThanOrEqual
@@ -72,12 +66,10 @@ final class ConditionEvaluatorTests: XCTestCase {
     func testAppVersionLessThan() {
         let evaluator = ConditionEvaluator(
             context: context,
-            customAttributeResolver: { _ in false },
-            cohorts: [:]
+            customAttributeResolver: { _ in false }
         )
 
         let condition = Condition(
-            id: "version-lt",
             type: .appVersion,
             values: ["3.0.0"],
             operator: .lessThan
@@ -89,12 +81,10 @@ final class ConditionEvaluatorTests: XCTestCase {
     func testBuildNumberComparison() {
         let evaluator = ConditionEvaluator(
             context: context,
-            customAttributeResolver: { _ in false },
-            cohorts: [:]
+            customAttributeResolver: { _ in false }
         )
 
         let condition = Condition(
-            id: "build-gte",
             type: .buildNumber,
             values: ["50"],
             operator: .greaterThanOrEqual
@@ -106,12 +96,10 @@ final class ConditionEvaluatorTests: XCTestCase {
     func testRegionCondition() {
         let evaluator = ConditionEvaluator(
             context: context,
-            customAttributeResolver: { _ in false },
-            cohorts: [:]
+            customAttributeResolver: { _ in false }
         )
 
         let condition = Condition(
-            id: "region-us",
             type: .region,
             values: ["US", "CA"],
             operator: .in
@@ -120,21 +108,19 @@ final class ConditionEvaluatorTests: XCTestCase {
         XCTAssertTrue(evaluator.evaluate(condition), "Should match US region")
     }
 
-    func testLocalePrefix() {
+    func testLanguageCondition() {
         let evaluator = ConditionEvaluator(
             context: context,
-            customAttributeResolver: { _ in false },
-            cohorts: [:]
+            customAttributeResolver: { _ in false }
         )
 
         let condition = Condition(
-            id: "locale-en",
-            type: .locale,
-            values: ["en"],
+            type: .language,
+            values: ["en", "fr"],
             operator: .in
         )
 
-        XCTAssertTrue(evaluator.evaluate(condition), "en_US should match en prefix")
+        XCTAssertTrue(evaluator.evaluate(condition), "Language 'en' should be in [en, fr]")
     }
 
     func testCustomAttribute() {
@@ -142,12 +128,10 @@ final class ConditionEvaluatorTests: XCTestCase {
             context: context,
             customAttributeResolver: { attribute in
                 return attribute == "is_premium"
-            },
-            cohorts: [:]
+            }
         )
 
         let condition = Condition(
-            id: "custom-premium",
             type: .customAttribute,
             values: ["is_premium"],
             operator: .custom
@@ -156,46 +140,15 @@ final class ConditionEvaluatorTests: XCTestCase {
         XCTAssertTrue(evaluator.evaluate(condition), "Should resolve custom attribute")
     }
 
-    func testCohortEvaluation() {
-        let cohort = Cohort(
-            name: "beta_users",
-            description: "Beta testers",
-            conditions: [
-                Condition(
-                    id: "version-gte",
-                    type: .appVersion,
-                    values: ["2.0.0"],
-                    operator: .greaterThanOrEqual
-                )
-            ]
-        )
-
-        let evaluator = ConditionEvaluator(
-            context: context,
-            customAttributeResolver: { _ in false },
-            cohorts: ["beta_users": cohort]
-        )
-
-        let condition = Condition(
-            id: "in-beta",
-            type: .cohort,
-            values: ["beta_users"],
-            operator: .in
-        )
-
-        XCTAssertTrue(evaluator.evaluate(condition), "Should be in beta_users cohort")
-    }
-
     func testAllConditionsPass() {
         let evaluator = ConditionEvaluator(
             context: context,
-            customAttributeResolver: { _ in false },
-            cohorts: [:]
+            customAttributeResolver: { _ in false }
         )
 
         let conditions = [
-            Condition(id: "1", type: .platform, values: ["iOS"], operator: .in),
-            Condition(id: "2", type: .region, values: ["US"], operator: .in),
+            Condition(type: .platform, values: ["iOS"], operator: .in),
+            Condition(type: .region, values: ["US"], operator: .in),
         ]
 
         XCTAssertTrue(evaluator.evaluateAll(conditions), "All conditions should pass")
@@ -204,13 +157,12 @@ final class ConditionEvaluatorTests: XCTestCase {
     func testAnyConditionFails() {
         let evaluator = ConditionEvaluator(
             context: context,
-            customAttributeResolver: { _ in false },
-            cohorts: [:]
+            customAttributeResolver: { _ in false }
         )
 
         let conditions = [
-            Condition(id: "1", type: .platform, values: ["iOS"], operator: .in),
-            Condition(id: "2", type: .region, values: ["GB"], operator: .in),
+            Condition(type: .platform, values: ["iOS"], operator: .in),
+            Condition(type: .region, values: ["GB"], operator: .in),
         ]
 
         XCTAssertFalse(evaluator.evaluateAll(conditions), "Should fail when any condition fails")

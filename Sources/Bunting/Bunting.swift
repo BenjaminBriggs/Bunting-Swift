@@ -60,7 +60,7 @@ public typealias JSONData = Data
 @Observable
 @MainActor
 public final class Bunting {
-    /// The currently active environment (development, staging, or production)
+    /// The currently active environment (development, beta, or production)
     ///
     /// Changes to this property trigger flag re-evaluation and cache invalidation.
     /// Use ``setEnvironment(_:)`` to change this value.
@@ -120,6 +120,39 @@ public final class Bunting {
         let temp = UUID()
         transientLocalID = temp
         return temp
+    }
+
+    /// A compact fingerprint of the flag configuration this client currently resolves.
+    ///
+    /// The fingerprint is a `<config_version>.<HEX>` string that encodes which
+    /// resolution path every flag took for the active environment and this device's
+    /// identity — not the values themselves. Pasted into the Bunting admin, it decodes
+    /// back to each flag's resolved value and the reason it resolved that way, which
+    /// makes it useful to attach to support tickets, logs, analytics, or QA reports.
+    ///
+    /// The string is returned as-is for the application to use however it wants.
+    ///
+    /// Returns `nil` until both a configuration and the device identity have loaded
+    /// (the same precondition as flag evaluation). Local developer overrides are not
+    /// reflected — the fingerprint describes the resolution the published artifact
+    /// produces for this client.
+    ///
+    /// ```swift
+    /// if let fingerprint = Bunting.shared.userFingerprint {
+    ///     logger.info("config fingerprint: \(fingerprint)")
+    /// }
+    /// ```
+    public var userFingerprint: String? {
+        guard let config = configuration, let localID = cachedLocalID else {
+            return nil
+        }
+        return ConfigFingerprint.compute(
+            configuration: config,
+            environment: environment,
+            context: context,
+            localID: localID,
+            customAttributeResolver: customAttributeResolver
+        )
     }
 
     // MARK: - Initialisation
@@ -241,7 +274,7 @@ public final class Bunting {
     /// If not called, the shared instance will be auto-created with default settings.
     ///
     /// - Parameters:
-    ///   - environment: The active environment (development, staging, or production)
+    ///   - environment: The active environment (development, beta, or production)
     ///   - context: Runtime context including platform, OS version, app version, etc.
     ///     If `nil`, uses ``EvaluationContext/current()``
     ///   - keychainAccessGroup: Keychain access group for multi-app scenarios.
@@ -367,6 +400,11 @@ public final class Bunting {
     }
 
     // MARK: - Core Evaluation (Sync from snapshots with memoization)
+    /// Deprecated-flag reads already reported to the delegate, and the config
+    /// version they were reported for (reset when a new config loads).
+    private var reportedDeprecatedReads: Set<String> = []
+    private var reportedDeprecatedConfigVersion: String?
+
     private func evaluateFlagSync(_ key: String, default defaultValue: FlagValue) -> FlagValue? {
         // Check override snapshot first
         if let overrideValue = overridesSnapshot[key],
@@ -406,6 +444,17 @@ public final class Bunting {
 
         // Store result in cache for future lookups
         memoizationCache.set(cacheKey, value: result)
+
+        // Surface deprecated (archived) flag reads, once per key per loaded config.
+        if config.flags[key]?.deprecated == true {
+            if reportedDeprecatedConfigVersion != config.configVersion {
+                reportedDeprecatedConfigVersion = config.configVersion
+                reportedDeprecatedReads.removeAll()
+            }
+            if reportedDeprecatedReads.insert(key).inserted {
+                eventsDelegate?.didReadDeprecatedFlag(flagKey: key)
+            }
+        }
 
         return result
     }
@@ -581,7 +630,7 @@ public final class Bunting {
     /// Resets the device's local identifier and invalidates cached flag evaluations
     ///
     /// Generates a new device identifier and stores it in Keychain. This affects:
-    /// - User bucketing for test variants (cohort membership changes)
+    /// - User bucketing for test variants (group assignment changes)
     /// - Rollout percentage calculations (user may qualify for different rollouts)
     /// - Any other flag conditions dependent on device identity
     ///

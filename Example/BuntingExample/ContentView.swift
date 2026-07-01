@@ -4,17 +4,17 @@ import Bunting
 import SwiftUI
 
 struct ContentView: View {
-    
+
     // MARK: - Remote Properties
     // These properties hold the current values of our feature flags
     // They're updated automatically when the flag changes.
-    
+
     @BuntingFlag(\.store.useNewPaywallDesign)
     private var useNewDesign: Bool
-    
+
     @BuntingFlag(\.features.maxItems)
     private var maxItems: Int
-    
+
     @BuntingFlag(\.ui.themeColor)
     private var themeColor: String
 
@@ -23,7 +23,7 @@ struct ContentView: View {
     // They're updated when the view appears and when we manually refresh
 
     @State private var viewModel = ViewModel()
-    
+
     var body: some View {
         NavigationStack {
             List {
@@ -76,7 +76,7 @@ struct ContentView: View {
                             .foregroundStyle(.secondary)
                     }
                 } header: {
-                    Text("Feature Flags")
+                    Text("Flags")
                 } footer: {
                     Text(
                         "These values are loaded from your Bunting configuration and evaluated locally on the device."

@@ -8,7 +8,7 @@ struct JSONEditorView: View {
         TextEditor(text: $text)
             .font(.system(.body, design: .monospaced))
             .toolbar {
-                ToolbarItem(placement: .bottomBar) {
+                ToolbarItem(placement: .primaryAction) {
                     Button("Format") {
                         if let pretty = prettyPrintedJSON(text) {
                             text = pretty

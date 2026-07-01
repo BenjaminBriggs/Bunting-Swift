@@ -27,24 +27,51 @@ public struct Flag: Decodable, Sendable {
     /// Configuration for the development environment
     public let development: EnvironmentConfig
 
-    /// Configuration for the staging environment
-    public let staging: EnvironmentConfig
+    /// Configuration for the beta environment
+    public let beta: EnvironmentConfig
 
     /// Configuration for the production environment
     public let production: EnvironmentConfig
+
+    /// Whether this flag is archived (deprecated).
+    ///
+    /// Archived flags remain in the config so existing clients keep resolving them,
+    /// but they are on their way out: codegen marks the generated accessor
+    /// `@available(*, deprecated)` and the SDK fires
+    /// ``BuntingEventsDelegate/didReadDeprecatedFlag(flagKey:)`` when one is read.
+    public let deprecated: Bool
 
     public init(
         type: FlagType,
         description: String?,
         development: EnvironmentConfig,
-        staging: EnvironmentConfig,
-        production: EnvironmentConfig
+        beta: EnvironmentConfig,
+        production: EnvironmentConfig,
+        deprecated: Bool = false
     ) {
         self.type = type
         self.description = description
         self.development = development
-        self.staging = staging
+        self.beta = beta
         self.production = production
+        self.deprecated = deprecated
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case type, description, development, beta, production, deprecated
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        // `deprecated` is optional in the artifact; older configs omit it (→ false).
+        self.init(
+            type: try container.decode(FlagType.self, forKey: .type),
+            description: try container.decodeIfPresent(String.self, forKey: .description),
+            development: try container.decode(EnvironmentConfig.self, forKey: .development),
+            beta: try container.decode(EnvironmentConfig.self, forKey: .beta),
+            production: try container.decode(EnvironmentConfig.self, forKey: .production),
+            deprecated: (try? container.decodeIfPresent(Bool.self, forKey: .deprecated)) ?? false
+        )
     }
 
     /// Get the configuration for a specific environment
@@ -55,8 +82,8 @@ public struct Flag: Decodable, Sendable {
         switch environment {
         case .development:
             return development
-        case .staging:
-            return staging
+        case .beta:
+            return beta
         case .production:
             return production
         }

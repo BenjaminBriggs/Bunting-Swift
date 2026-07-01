@@ -13,13 +13,13 @@ import Foundation
 /// When accessing flags, you must know the expected type. Type mismatches return the default value.
 public enum FlagType: String, Codable, Sendable {
     /// Boolean true/false values for simple feature toggles
-    case boolean
+    case boolean = "bool"
 
     /// String text values for configuration or labels
     case string
 
     /// Integer whole number values for counts and thresholds
-    case integer
+    case integer = "int"
 
     /// Double floating-point values for percentages and calculations
     case double

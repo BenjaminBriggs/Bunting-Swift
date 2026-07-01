@@ -77,7 +77,6 @@ Bunting is a feature flag SDK designed for Apple platforms (iOS, macOS, watchOS,
 - <doc:GradualRollouts>
 - ``Test``
 - ``Rollout``
-- ``Cohort``
 
 ### Events & Observability
 

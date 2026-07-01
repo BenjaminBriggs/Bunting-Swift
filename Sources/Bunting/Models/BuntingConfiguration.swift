@@ -1,11 +1,10 @@
 import Foundation
 
-/// The root configuration object containing all flags, cohorts, tests, and rollouts
+/// The root configuration object containing all flags, tests, and rollouts
 ///
 /// This is the complete feature flag configuration fetched from the CDN and verified
 /// with JWS signatures. It contains:
 /// - **flags**: All feature flags with environment-specific variants
-/// - **cohorts**: Named user cohorts for segmentation (e.g., "beta_users")
 /// - **tests**: A/B test definitions for bucketing users into groups
 /// - **rollouts**: Gradual rollout definitions for percentage-based deployment
 ///
@@ -35,12 +34,6 @@ public struct BuntingConfiguration: Decodable, Sendable {
     /// Allows multiple independent apps to use the same Bunting instance.
     public let appIdentifier: String
 
-    /// Named user cohorts for audience segmentation
-    ///
-    /// Maps cohort names (e.g., "beta_users") to cohort definitions.
-    /// Used in conditional variants to target specific user groups.
-    public let cohorts: [String: Cohort]
-
     /// All feature flags in this configuration
     ///
     /// Maps flag keys to flag definitions with environment-specific variants.
@@ -63,7 +56,6 @@ public struct BuntingConfiguration: Decodable, Sendable {
         case configVersion = "config_version"
         case publishedAt = "published_at"
         case appIdentifier = "app_identifier"
-        case cohorts
         case flags
         case tests
         case rollouts
@@ -97,7 +89,6 @@ public struct BuntingConfiguration: Decodable, Sendable {
             }
         }
 
-        cohorts = try container.decode([String: Cohort].self, forKey: .cohorts)
         flags = try container.decode([String: Flag].self, forKey: .flags)
         tests = try container.decode([String: Test].self, forKey: .tests)
         rollouts = try container.decode([String: Rollout].self, forKey: .rollouts)
