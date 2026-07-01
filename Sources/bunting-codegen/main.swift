@@ -327,6 +327,8 @@ struct CodeGenerator {
             return "0"
         case "double":
             if case .double(let v) = def { return "\(v)" }
+            // Same whole-number coercion as getTypeAndDefault(from:) above.
+            if case .int(let v) = def { return "\(v).0" }
             return "0.0"
         case "date":
             return "Date()"
@@ -422,6 +424,13 @@ struct CodeGenerator {
         case "double":
             if case .double(let value) = defaultValue {
                 return ("Double", "\(value)")
+            }
+            // Whole-number JSON seed values (e.g. `2`) decode as .int, not .double,
+            // per FlagValue's int-before-double decode ordering. Coerce so the
+            // emitted default is still a Double literal instead of silently
+            // falling back to 0.0.
+            if case .int(let value) = defaultValue {
+                return ("Double", "\(value).0")
             }
             return ("Double", "0.0")
 
