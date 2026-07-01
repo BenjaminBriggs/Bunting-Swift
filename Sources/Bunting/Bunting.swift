@@ -125,6 +125,17 @@ public final class Bunting {
     /// Where the active configuration came from (fetched, cache, or seed).
     /// `nil` until a configuration has loaded.
     public private(set) var configSource: ConfigSource?
+
+    /// Wall-clock time of the last successful config fetch — a fresh 200
+    /// whose config verified and decoded, or a 304 confirming the cached
+    /// config is still current. `nil` until the first successful fetch this
+    /// launch; not persisted across relaunches.
+    public private(set) var lastFetchTime: Date?
+
+    /// The ETag of the active configuration, if the server supplied one.
+    /// `nil` until a configuration has been fetched from the network.
+    public private(set) var etag: String?
+
     public var localID: UUID {
         if let id = cachedLocalID { return id }
         if let t = transientLocalID { return t }
@@ -199,6 +210,8 @@ public final class Bunting {
                 self.configuration = configState.configuration
                 self.configSource = configState.source
                 self.signatureVerified = configState.signatureVerified
+                self.lastFetchTime = configState.lastFetchTime
+                self.etag = configState.etag
                 self.overridesSnapshot = overrides
                 self.cachedLocalID = id
                 self.transientLocalID = nil
@@ -219,6 +232,8 @@ public final class Bunting {
                 self.configuration = refreshed.configuration
                 self.configSource = refreshed.source
                 self.signatureVerified = refreshed.signatureVerified
+                self.lastFetchTime = refreshed.lastFetchTime
+                self.etag = refreshed.etag
             }
         }
 
@@ -514,6 +529,8 @@ public final class Bunting {
             self.configuration = configState.configuration
             self.configSource = configState.source
             self.signatureVerified = configState.signatureVerified
+            self.lastFetchTime = configState.lastFetchTime
+            self.etag = configState.etag
             // Invalidate cache when configuration changes
             self.memoizationCache.invalidateAll()
         }

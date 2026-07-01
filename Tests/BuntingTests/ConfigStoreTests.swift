@@ -252,6 +252,60 @@ final class ConfigStoreTests: XCTestCase {
         XCTAssertFalse(FileManager.default.fileExists(atPath: cachedConfigURL.path))
     }
 
+    // MARK: - lastFetchTime / etag exposure
+
+    func testSuccessfulFetchSetsLastFetchTimeAndETag() async throws {
+        StubURLProtocol.setRoutes([
+            configURLString: .init(
+                status: 200,
+                headers: [SignatureTransport.headerName: jws, "ETag": "\"abc123\""],
+                body: configData
+            )
+        ])
+
+        let store = try makeStore()
+        let before = Date()
+        try await store.refresh()
+        let after = Date()
+
+        let state = await store.getConfigState()
+        XCTAssertEqual(state.etag, "\"abc123\"")
+        let fetchTime = try XCTUnwrap(state.lastFetchTime)
+        XCTAssertTrue(fetchTime >= before && fetchTime <= after)
+    }
+
+    /// A 304 proves contact with the server and confirms our cached config
+    /// is still current — it counts as a successful fetch for display
+    /// purposes, so it must advance `lastFetchTime`. The ETag from the prior
+    /// 200 response is retained since the 304 doesn't carry a new one.
+    func testNotModifiedResponseUpdatesLastFetchTimeAndRetainsETag() async throws {
+        StubURLProtocol.setRoutes([
+            configURLString: .init(
+                status: 200,
+                headers: [SignatureTransport.headerName: jws, "ETag": "\"abc123\""],
+                body: configData
+            )
+        ])
+        let store = try makeStore()
+        try await store.refresh()
+        let firstState = await store.getConfigState()
+        let firstFetchTime = try XCTUnwrap(firstState.lastFetchTime)
+
+        try await Task.sleep(nanoseconds: 10_000_000)
+
+        StubURLProtocol.setRoutes([
+            configURLString: .init(status: 304, headers: [:], body: Data())
+        ])
+        try await store.refresh()
+
+        let secondState = await store.getConfigState()
+        let secondFetchTime = try XCTUnwrap(secondState.lastFetchTime)
+        XCTAssertGreaterThan(
+            secondFetchTime, firstFetchTime,
+            "304 must update lastFetchTime — it proves contact with the server")
+        XCTAssertEqual(secondState.etag, "\"abc123\"", "etag from prior 200 must be retained on 304")
+    }
+
     // MARK: - Undecodable artifact regression (item 5)
 
     /// A fetched artifact that passes signature verification but fails to

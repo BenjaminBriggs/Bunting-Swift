@@ -173,11 +173,9 @@ public struct BuntingInfoView: View {
         // Device identity
         localID = bunting.localID.uuidString
 
-        // Network metadata (from ConfigStore)
-        // Note: These would need to be exposed by ConfigStore
-        // For now, we'll leave them as optional
-        lastFetchTime = nil  // TODO: Expose from ConfigStore
-        etag = nil  // TODO: Expose from ConfigStore
+        // Network metadata (sourced from ConfigStore via the Bunting facade)
+        lastFetchTime = bunting.lastFetchTime
+        etag = bunting.etag
 
         // Load current overrides
         overrides = bunting.getAllOverrides()

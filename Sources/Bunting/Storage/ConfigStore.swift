@@ -17,6 +17,21 @@ actor ConfigStore {
     private var cachedLastModified: String?
     private var lastTTLRefresh: Date?
 
+    /// Wall-clock time of the last fetch *attempt* that completed successfully:
+    /// either a 200 whose config verified and decoded, or a 304 Not Modified.
+    /// A 304 counts as success here — it proves contact with the server and
+    /// confirms our cached config is still current. Failed attempts (network
+    /// errors, signature verification failures, decode failures) leave this
+    /// untouched.
+    ///
+    /// Distinct from `lastFetchTime` above, which records every attempt
+    /// regardless of outcome and exists only to drive request rate limiting.
+    ///
+    /// In-memory only — not persisted to `metadata.json`, so it resets to
+    /// `nil` on relaunch until the next successful fetch. Exposed read-only
+    /// via `ConfigState.lastFetchTime` for the debug/info UI.
+    private var lastSuccessfulFetchTime: Date?
+
     private let cacheDirectory: URL
     private let configFileName = "config_v1.json"
     private let signatureFileName = "config_v1.json.sig"
@@ -90,13 +105,17 @@ actor ConfigStore {
         let configuration: BuntingConfiguration?
         let source: ConfigSource?
         let signatureVerified: Bool
+        let lastFetchTime: Date?
+        let etag: String?
     }
 
     func getConfigState() -> ConfigState {
         return ConfigState(
             configuration: activeConfig,
             source: activeSource,
-            signatureVerified: activeSignatureVerified
+            signatureVerified: activeSignatureVerified,
+            lastFetchTime: lastSuccessfulFetchTime,
+            etag: cachedETag
         )
     }
 
@@ -159,6 +178,10 @@ actor ConfigStore {
 
         // Handle 304 Not Modified
         if httpResponse.statusCode == 304 {
+            // A 304 proves contact with the server and confirms our cached
+            // config is still current — counts as a successful fetch.
+            lastSuccessfulFetchTime = Date()
+
             // Config hasn't changed, update TTL and continue
             if forceRefresh {
                 lastTTLRefresh = Date()
@@ -221,6 +244,7 @@ actor ConfigStore {
         // Update cached headers
         cachedETag = httpResponse.value(forHTTPHeaderField: "ETag")
         cachedLastModified = httpResponse.value(forHTTPHeaderField: "Last-Modified")
+        lastSuccessfulFetchTime = Date()
 
         try saveMetadata()
 
