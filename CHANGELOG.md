@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `visionOS` is now correctly detected as the device platform. Previously `EvaluationContext.current()` had no `visionOS` branch, so Vision Pro devices reported platform `"unknown"` and `platform` conditions targeting `"visionOS"` never matched.
+- `EvaluationContext.current()` now reports `deviceModel` `"Apple Vision Pro"` on visionOS instead of `"unknown"`, so admin `device_model` rules can target Vision Pro.
+- visionOS now registers the foreground auto-refresh observer (`UIApplication.willEnterForegroundNotification`), matching iOS/tvOS. Previously a Vision Pro app only refreshed once at launch.
 - The package manifest now declares `visionOS 2.0+` as a supported platform, matching the `visionOS` detection above and the admin's existing `visionOS` targeting option.
 - `BuntingInfoView` and `BuntingDebugView` now show the last successful fetch time and the cached ETag instead of blank placeholders.
 - Substantially expanded automated test coverage: the flag evaluator, memoization cache, overrides store, config store (transport, caching, fallback), JWS signature verification, config decoding, codegen output, and the `bunting-cli`/`bunting-codegen` executables all now have dedicated test suites.
@@ -23,3 +25,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Date flag values with fractional seconds — the format actually published by the admin backend, e.g. `"2026-07-01T10:00:04.796Z"` — now decode correctly. Previously they failed ISO 8601 parsing and `date(key:default:)` silently returned the caller-supplied default.
 - Double-typed flags whose value is a whole number (e.g. `2.0`, which serializes as `2` in JSON) now resolve to the correct value instead of falling back to the caller-supplied default.
 - The codegen plugin now emits a `Double` literal (e.g. `2.0`) for whole-number double flag defaults instead of incorrectly coercing them to `0.0`.
+- Keychain writes on visionOS now set `kSecAttrAccessibleAfterFirstUnlock`, matching iOS/tvOS/watchOS, instead of falling through to minimal attributes.
+
+### Known issues / follow-ups
+
+- The `Bunting` facade has no internal test seam (private `init`, reads `Bundle.main`'s plist directly), so override precedence and `evaluateFlagSync` composition are untested in-process. First post-release task: add an internal `init` seam with injectable stores/config.
+- `MemoizationCache` caches the caller-supplied default for a MISSING flag key under a cache key that excludes the default value itself. Two call sites reading the same nonexistent key with different defaults will get whichever default the first caller supplied. Narrow in practice, since codegen supplies exactly one default per key.

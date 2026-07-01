@@ -174,6 +174,8 @@ public struct EvaluationContext: Sendable, Hashable {
             deviceModel = WKInterfaceDevice.current().model
         #elseif os(macOS)
             deviceModel = "Mac"
+        #elseif os(visionOS)
+            deviceModel = "Apple Vision Pro"
         #else
             deviceModel = "unknown"
         #endif

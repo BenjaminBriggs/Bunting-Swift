@@ -37,7 +37,6 @@ enum SignedConfigFixture {
 
     static var configData: Data { Data(base64Encoded: configB64)! }
     static var pem: String { String(data: Data(base64Encoded: pemB64)!, encoding: .utf8)! }
-    static var secondaryConfigData: Data { Data(base64Encoded: secondaryConfigB64)! }
     static var secondaryPem: String {
         String(data: Data(base64Encoded: secondaryPemB64)!, encoding: .utf8)!
     }

@@ -99,7 +99,7 @@ actor BuntingIdentity {
         if status == errSecItemNotFound {
             var addQuery = query
             addQuery[kSecValueData as String] = data
-            #if os(iOS) || os(tvOS) || os(watchOS)
+            #if os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
             addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
             #endif
 

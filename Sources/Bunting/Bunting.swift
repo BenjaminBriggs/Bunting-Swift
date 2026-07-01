@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-#if os(iOS) || os(tvOS)
+#if os(iOS) || os(tvOS) || os(visionOS)
     import UIKit
 #elseif os(macOS)
     import AppKit
@@ -244,7 +244,7 @@ public final class Bunting {
     // MARK: - Foreground Polling
 
     private func setupForegroundObserver() {
-        #if os(iOS) || os(tvOS)
+        #if os(iOS) || os(tvOS) || os(visionOS)
             NotificationCenter.default.addObserver(
                 forName: UIApplication.willEnterForegroundNotification,
                 object: nil,
