@@ -6,13 +6,11 @@ struct BootstrapConfig: Codable {
     let endpointURL: String
     let publicKeys: [PublicKeyInfo]
     let fetchPolicy: FetchPolicy
-    let certPins: [String]?
 
     enum CodingKeys: String, CodingKey {
         case endpointURL = "endpoint_url"
         case publicKeys = "public_keys"
         case fetchPolicy = "fetch_policy"
-        case certPins = "cert_pins"
     }
 
     /// Loads bootstrap configuration from the main bundle
