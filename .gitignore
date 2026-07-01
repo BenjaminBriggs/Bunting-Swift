@@ -55,3 +55,6 @@ playground.xcworkspace
 *.swp
 *.swo
 
+
+# Claude Code local-only notes (references the out-of-repo Bunting parent docs)
+CLAUDE.local.md
