@@ -41,6 +41,8 @@ public struct BuntingDebugView: View {
     @State private var configSource: ConfigSource?
     @State private var localID: String = ""
     @State private var environment: String = ""
+    @State private var lastFetchTime: Date?
+    @State private var etag: String?
 
     @State private var isRefreshing = false
     @State private var showClearOverridesConfirmation = false
@@ -134,8 +136,8 @@ public struct BuntingDebugView: View {
                 signatureVerified: signatureVerified,
                 configSource: configSource,
                 localID: localID,
-                lastFetchTime: nil,
-                etag: nil,
+                lastFetchTime: lastFetchTime,
+                etag: etag,
                 showResetIdentity: true,
                 onResetIdentity: {
                     Task { await resetIdentity() }
@@ -211,6 +213,10 @@ public struct BuntingDebugView: View {
         configSource = bunting.configSource
         environment = "\(bunting.environment)"
         localID = bunting.localID.uuidString
+
+        // Network metadata (sourced from ConfigStore via the Bunting facade)
+        lastFetchTime = bunting.lastFetchTime
+        etag = bunting.etag
 
         // Load current overrides
         overrides = bunting.getAllOverrides()
