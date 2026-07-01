@@ -97,7 +97,7 @@ public struct BuntingDebugView: View {
             .navigationBarTitleDisplayMode(.inline)
         #endif
         .toolbar {
-            ToolbarItemGroup(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: trailingToolbarPlacement) {
                 if overrides.isEmpty == false {
                     Button {
                         showClearOverridesConfirmation = true
@@ -117,7 +117,7 @@ public struct BuntingDebugView: View {
                 }
             }
              
-            ToolbarItemGroup(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: trailingToolbarPlacement) {
                 Button {
                     showingDetails = true
                 } label: {
@@ -149,13 +149,29 @@ public struct BuntingDebugView: View {
             )
             .presentationDetents([.medium, .large])
         }
-        .searchable(text: $searchText, placement: .navigationBarDrawer, prompt: "Search flags")
+        .searchable(text: $searchText, placement: searchFieldPlacement, prompt: "Search flags")
         .task {
             await loadDebugInfo()
         }
         .refreshable {
             await loadDebugInfo()
         }
+    }
+
+    private var trailingToolbarPlacement: ToolbarItemPlacement {
+        #if os(iOS)
+            return .navigationBarTrailing
+        #else
+            return .automatic
+        #endif
+    }
+
+    private var searchFieldPlacement: SearchFieldPlacement {
+        #if os(iOS)
+            return .navigationBarDrawer
+        #else
+            return .automatic
+        #endif
     }
 
     // MARK: - Computed Properties

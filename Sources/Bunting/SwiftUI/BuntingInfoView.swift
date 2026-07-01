@@ -82,7 +82,7 @@ public struct BuntingInfoView: View {
             .navigationBarTitleDisplayMode(.inline)
         #endif
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: trailingToolbarPlacement) {
                 Button {
                     showingDetails = true
                 } label: {
@@ -108,13 +108,29 @@ public struct BuntingInfoView: View {
             )
             .presentationDetents([.medium, .large])
         }
-        .searchable(text: $searchText, placement: .navigationBarDrawer, prompt: "Search flags")
+        .searchable(text: $searchText, placement: searchFieldPlacement, prompt: "Search flags")
         .task {
             await loadInfo()
         }
         .refreshable {
             await loadInfo()
         }
+    }
+
+    private var trailingToolbarPlacement: ToolbarItemPlacement {
+        #if os(iOS)
+            return .navigationBarTrailing
+        #else
+            return .automatic
+        #endif
+    }
+
+    private var searchFieldPlacement: SearchFieldPlacement {
+        #if os(iOS)
+            return .navigationBarDrawer
+        #else
+            return .automatic
+        #endif
     }
 
     // MARK: - Computed Properties

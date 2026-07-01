@@ -153,10 +153,12 @@ public struct BuntingDetailsSheet: View {
                 }
             }
             .navigationTitle("Details")
-            .navigationBarTitleDisplayMode(.inline)
+            #if os(iOS)
+                .navigationBarTitleDisplayMode(.inline)
+            #endif
             .toolbar {
                 if let onRefresh {
-                    ToolbarItem(placement: .navigationBarTrailing) {
+                    ToolbarItem(placement: trailingToolbarPlacement) {
                         Button {
                             Task {
                                 isRefreshing = true
@@ -175,6 +177,14 @@ public struct BuntingDetailsSheet: View {
                 }
             }
         }
+    }
+
+    private var trailingToolbarPlacement: ToolbarItemPlacement {
+        #if os(iOS)
+            return .navigationBarTrailing
+        #else
+            return .automatic
+        #endif
     }
 }
 

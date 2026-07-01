@@ -54,9 +54,9 @@ actor OverridesStore {
     // MARK: - Public API
 
     /// Sets an override value for a flag
-    func setOverride(_ key: String, value: Any?) {
-        if let value = value, let overrideValue = OverrideValue(value) {
-            overrides[key] = overrideValue
+    func setOverride(_ key: String, value: OverrideValue?) {
+        if let value {
+            overrides[key] = value
         } else {
             overrides.removeValue(forKey: key)
         }

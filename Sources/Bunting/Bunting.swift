@@ -562,7 +562,8 @@ public final class Bunting {
     /// Bunting.shared.setOverride("feature/dark_mode", value: nil)
     /// ```
     public func setOverride(_ key: String, value: Any?) {
-        if let value, let override = OverrideValue(value) {
+        let override = value.flatMap { OverrideValue($0) }
+        if let override {
             overridesSnapshot[key] = override
         } else {
             overridesSnapshot.removeValue(forKey: key)
@@ -576,7 +577,7 @@ public final class Bunting {
         memoizationCache.invalidate(flagKey: key)
 
         Task {
-            await overridesStore.setOverride(key, value: value)
+            await overridesStore.setOverride(key, value: override)
         }
     }
 

@@ -157,7 +157,9 @@ public struct FlagRowView: View {
                     .padding()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .navigationTitle("Edit JSON")
-                    .navigationBarTitleDisplayMode(.inline)
+                    #if os(iOS)
+                        .navigationBarTitleDisplayMode(.inline)
+                    #endif
                     .toolbar {
                         ToolbarItem(placement: .cancellationAction) {
                             Button("Cancel") { showJSONEditor = false }

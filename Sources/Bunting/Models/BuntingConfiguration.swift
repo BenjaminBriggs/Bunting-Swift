@@ -60,7 +60,11 @@ public struct BuntingConfiguration: Decodable, Sendable {
         case tests
         case rollouts
     }
+}
 
+// The custom Decodable init lives in an extension so the synthesized memberwise
+// initializer stays available (an init in the main body would suppress it).
+extension BuntingConfiguration {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
