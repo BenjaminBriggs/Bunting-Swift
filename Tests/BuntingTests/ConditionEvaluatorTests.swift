@@ -167,4 +167,32 @@ final class ConditionEvaluatorTests: XCTestCase {
 
         XCTAssertFalse(evaluator.evaluateAll(conditions), "Should fail when any condition fails")
     }
+
+    func testVisionOSPlatformCondition() {
+        // EvaluationContext.current() can't be exercised for visionOS outside
+        // that platform's toolchain, so this covers the condition-matching
+        // path with an injected context (see EvaluationContext.current()'s
+        // #if os(visionOS) branch for the platform derivation itself).
+        let visionContext = EvaluationContext(
+            platform: "visionOS",
+            osVersion: "2.0",
+            appVersion: "1.0.0",
+            buildNumber: "1",
+            deviceModel: "Apple Vision Pro",
+            region: "US",
+            language: "en"
+        )
+        let evaluator = ConditionEvaluator(
+            context: visionContext,
+            customAttributeResolver: { _ in false }
+        )
+
+        let condition = Condition(
+            type: .platform,
+            values: ["visionOS"],
+            operator: .in
+        )
+
+        XCTAssertTrue(evaluator.evaluate(condition), "Should match visionOS platform")
+    }
 }

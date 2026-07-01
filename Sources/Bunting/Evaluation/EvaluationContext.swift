@@ -159,6 +159,8 @@ public struct EvaluationContext: Sendable, Hashable {
             platform = "watchOS"
         #elseif os(tvOS)
             platform = "tvOS"
+        #elseif os(visionOS)
+            platform = "visionOS"
         #else
             platform = "unknown"
         #endif

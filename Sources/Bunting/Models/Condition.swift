@@ -78,7 +78,7 @@ public enum ConditionType: String, Codable, Sendable, Hashable {
 
     // MARK: List conditions (use `in` / `not_in`)
 
-    /// The OS platform: `"iOS"`, `"iPadOS"`, `"macOS"`, `"watchOS"`, `"tvOS"`
+    /// The OS platform: `"iOS"`, `"iPadOS"`, `"macOS"`, `"watchOS"`, `"tvOS"`, `"visionOS"`
     case platform
 
     /// The device model identifier (e.g., `"iPhone16,2"`)
