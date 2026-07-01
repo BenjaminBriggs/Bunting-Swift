@@ -61,7 +61,7 @@ The single source of truth for platforms, environments, flag types, signing, the
 `@MainActor` synchronous. Never add `await` to a flag read. Only `refresh()` and
 `resetIdentity()` are `async`. Override methods (`setOverride`, `clearOverride`,
 `clearAllOverrides`) and status properties (`configVersion`, `publishedAt`,
-`signatureVerified`, `localID`) are also synchronous.
+`signatureVerified`, `configSource`, `localID`) are also synchronous.
 
 **Concurrency model** — `Bunting` is a `@MainActor @Observable` class. Internal components
 (`ConfigStore`, `OverridesStore`, `BuntingIdentity`) are Swift actors. Flag reads operate

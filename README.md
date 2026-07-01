@@ -253,7 +253,7 @@ struct SettingsView: View {
 Shows:
 - Current environment
 - Config version and publication date
-- Signature verification status
+- Signature verification status and config source (fetched/cache/seed)
 - Device identity (local ID)
 - Pull-to-refresh support
 
@@ -384,8 +384,8 @@ Paste the string into the Bunting admin to decode it back to each flag's resolve
 
 1. **Bootstrap**: Load `BuntingConfig.plist` from the app bundle (endpoint URL, public keys, fetch policy)
 2. **Fetch**: Download signed configuration from CDN with ETag caching
-3. **Verify**: Validate JWS (RS256) signature using public key matched by `kid`
-4. **Cache**: Persist verified config atomically to Application Support
+3. **Verify**: Read compact JWS from `x-bunting-signature` response header; if absent, fetch `<endpoint>.sig`; verify RS256 over exact response bytes
+4. **Cache**: Persist verified config and its detached JWS atomically to Application Support
 5. **Evaluate**: Resolve flags locally using conditions, tests, and rollouts
 6. **Override**: Apply local overrides (highest precedence)
 
@@ -406,9 +406,11 @@ First match wins.
 
 On fetch failure or signature verification failure:
 
-1. Last successfully verified cached config (Application Support)
+1. Last successfully verified cached config (Application Support) — the persisted JWS (`config_v1.json.sig`) is re-verified over the exact cached bytes on every load; a missing or invalid signature deletes the cache
 2. Bundled seed `BuntingConfig.json` (if present in app bundle)
 3. Code-provided default values
+
+**Migration note**: installs upgrading from a version without signature persistence have no `config_v1.json.sig` alongside the existing cache. On first launch after upgrading, the existing cache is discarded (no signature to re-verify against) and the SDK falls back to the bundled seed until the startup refresh restores a verified cache.
 
 ### Bucketing Algorithm
 
@@ -456,12 +458,18 @@ Tests cover:
 
 ### Signature Verification
 
-All configurations are signed with RS256:
+The publisher writes two artifacts: `<app>/config.json` and `<app>/config.json.sig` (a detached JWS, RFC 7797 `b64:false`, over the exact bytes of `config.json`). Clients check for the compact JWS in the `x-bunting-signature` response header on the `config.json` response first; if absent, they fetch `config.json.sig` from the same path. Raw S3/MinIO serving with the `.sig` file is fully supported; CDN header injection is an optimization that saves one request.
 
-1. Admin backend signs `config.json` with a private key
-2. Detached JWS signature delivered in the `x-bunting-signature` response header
-3. SDK verifies offline using the matching public key (looked up by `kid`)
-4. On verification failure, the response is discarded and the cached config is retained
+Verification flow:
+
+1. Admin backend signs `config.json` with an RS256 private key
+2. SDK reads the compact JWS from the `x-bunting-signature` response header, or fetches `<endpoint>.sig` if the header is absent
+3. RS256 signature verified offline using the matching public key (looked up by `kid`)
+4. On success, the config and its JWS are persisted to Application Support; on failure, the response is discarded and the cached config is retained
+
+The persisted JWS is re-verified over the exact cached bytes on every cache load. A missing or failing re-verification deletes the cache and falls through to the bundled seed.
+
+`signatureVerified` is `true` only when the active configuration's JWS was cryptographically verified in this process — a fresh fetch or a re-verified cache load. It is `false` for the bundled seed (whose integrity story is verification at fetch time by `bunting-cli` plus the app bundle's code signature) and while nothing is loaded. Use `configSource` (`.fetched`, `.cache`, `.seed`) to distinguish the origin of the active configuration.
 
 ### Key Rotation
 

@@ -39,8 +39,9 @@ The plugin generates strongly-typed Swift accessors from your flag definitions.
 **What it does**:
 1. Locates your `BuntingConfig.plist`
 2. Fetches `config.json` from the configured endpoint
-3. Verifies the JWS signature
-4. Saves to `BuntingConfig.json`
+3. Reads the compact JWS from the `x-bunting-signature` response header; if absent, fetches `<endpoint>.sig`
+4. Verifies the RS256 signature over the exact fetched bytes
+5. Saves the verified config to `BuntingConfig.json` (only written after verification succeeds)
 
 ---
 
@@ -139,11 +140,14 @@ The plugins use two command-line executables:
 
 ### bunting-cli
 
-Fetches configuration from your backend.
+Fetches configuration from your backend, verifies the signature, and writes the output only
+after verification succeeds.
 
 ```bash
 bunting-cli /path/to/BuntingConfig.plist [output-path]
 ```
+
+Exit codes: `1` usage/plist/file-system error, `2` network error, `3` signature missing or failed, `4` config JSON decode failed.
 
 ### bunting-codegen
 
@@ -190,7 +194,7 @@ To enable strongly-typed flag accessors, you have two options:
 
 Check that:
 - Public keys in `BuntingConfig.plist` match your backend's signing keys
-- Backend returns JWS signature in `x-bunting-signature` header
+- The backend either injects the compact JWS in the `x-bunting-signature` response header, or serves a sibling `<endpoint>.sig` file at the same path
 - Configuration endpoint is accessible
 
 ## CI/CD Integration

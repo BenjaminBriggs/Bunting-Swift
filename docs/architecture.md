@@ -89,28 +89,48 @@ persists across reinstalls and is shared across the developer's apps when a
    defending against a CDN serving a stale response indefinitely.
 4. **Rate limiting**: respects `min_interval_seconds` between fetches to prevent
    hammering the CDN on every foreground resume.
-5. **Atomic writes**: the verified config is written to `Application Support` atomically
-   (write to temp file, then `FileManager.replaceItem`). A partially-written file is
-   never visible to readers.
+5. **Atomic writes**: the verified config bytes and their detached JWS are written to
+   `Application Support` atomically. The signature (`config_v1.json.sig`) is written first
+   so that a crash between the two writes leaves an unverifiable pair rather than a
+   silently unverified config.
 6. **Metadata persistence**: ETag, last-fetch timestamp, and TTL are persisted alongside
    the config so rate limiting and TTL survive process restarts.
 
 On fetch failure or signature verification failure, `ConfigStore` falls back to the
-last cached config. If no cache exists, the bundled seed config (if present) is used.
-Flags return their code-provided default values if no config is available at all.
+last cached config. The persisted JWS (`config_v1.json.sig`) is re-verified over the
+exact cached bytes on every load; a missing or invalid signature deletes both cache files
+and falls through to the bundled seed. If no cache exists, the bundled seed config (if
+present) is used. Flags return their code-provided default values if no config is
+available at all.
+
+**Migration note**: installs upgrading from a version without signature persistence have no
+`config_v1.json.sig` alongside the cache. The first launch discards the existing cache and
+falls back to the seed until the startup refresh restores a verified cache.
 
 ## JWS Signature Verification
 
-The admin backend signs `config.json` with an RS256 private key. The signature is
-delivered as a detached JWS in the `x-bunting-signature` response header.
+The publisher writes two artifacts: `<app>/config.json` and `<app>/config.json.sig` (a
+detached JWS, RFC 7797 `b64:false`, over the exact bytes of `config.json`). Clients check
+for the compact JWS in the `x-bunting-signature` response header on the `config.json`
+response first; if absent, they fetch `config.json.sig` from the same path. Raw S3/MinIO
+serving with the `.sig` file is fully supported; CDN header injection is an optimization
+that saves one request.
 
 The SDK verifies the signature on every successful fetch:
 
-1. Parse the JWS compact serialisation.
+1. Read the compact JWS from the `x-bunting-signature` response header; if absent, issue
+   a GET to `<endpoint>.sig`.
 2. Locate the matching public key by `kid` from the `public_keys` array in
    `BuntingConfig.plist`.
 3. Verify the RS256 signature over the raw response bytes using `SecKeyVerifySignature`.
-4. On success, persist the config. On failure, discard the response and retain the cache.
+4. On success, persist the config bytes and JWS atomically. On failure, discard the
+   response and retain the cache.
+
+`ConfigSource` records where the active configuration came from: `.fetched` (fresh, verified
+in this process), `.cache` (disk cache, re-verified on load), or `.seed` (bundled seed,
+unverified at runtime). `signatureVerified` is `true` only for `.fetched` and `.cache`; the
+seed's integrity story is verification at fetch time by `bunting-cli` plus the app bundle's
+code signature.
 
 Multiple public keys are supported to allow zero-downtime key rotation: publish with
 both the old and new keys in the plist, rotate the signing key in the admin backend,
@@ -171,7 +191,7 @@ Override precedence: local override → evaluated variant → environment defaul
 
 Two built-in views are provided:
 
-- `BuntingInfoView` — read-only: environment, config version, signature status, device ID.
+- `BuntingInfoView` — read-only: environment, config version, signature status, config source, device ID.
 - `BuntingDebugView` — interactive: all of the above plus per-flag override controls.
 
 The `@Environment(\.bunting)` key provides access to `Bunting.shared` through the

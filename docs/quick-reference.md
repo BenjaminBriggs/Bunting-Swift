@@ -49,7 +49,8 @@ await Bunting.shared.refresh()
 ```swift
 let version  = Bunting.shared.configVersion      // "2025-01-15.1"
 let published = Bunting.shared.publishedAt        // Date?
-let verified  = Bunting.shared.signatureVerified  // Bool
+let verified  = Bunting.shared.signatureVerified  // true only when JWS verified in this process
+let source   = Bunting.shared.configSource        // ConfigSource? (.fetched/.cache/.seed)
 let deviceID  = Bunting.shared.localID            // UUID
 ```
 
@@ -154,7 +155,8 @@ struct MyView: View {
 
 ```swift
 print("Version:", Bunting.shared.configVersion ?? "Not loaded")
-print("Verified:", Bunting.shared.signatureVerified)
+print("Verified:", Bunting.shared.signatureVerified)  // false for seed and while nothing is loaded
+print("Source:", Bunting.shared.configSource?.rawValue ?? "none")
 ```
 
 ### Test Different Values
@@ -252,6 +254,9 @@ Each environment has its own default values and variants in the config artifact.
 ## Security
 
 - Configuration signed with JWS (RS256); public key in `BuntingConfig.plist` verifies it
+- Signature delivered via `x-bunting-signature` response header or `<endpoint>.sig` file (`.sig` is the fallback)
+- The persisted JWS is re-verified over cached bytes on every cache load
+- `signatureVerified` is `true` only when the JWS was verified in this process; `false` for the bundled seed
 - On verification failure, last-good cached config is used; on no cache, code defaults apply
 - Multiple `public_keys` entries supported for zero-downtime key rotation
 
