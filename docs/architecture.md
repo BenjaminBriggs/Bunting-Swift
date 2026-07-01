@@ -137,6 +137,14 @@ Multiple public keys are supported to allow zero-downtime key rotation: publish 
 both the old and new keys in the plist, rotate the signing key in the admin backend,
 then remove the old key in a subsequent app release.
 
+**Replay is not detected.** Signatures carry no expiry, and `config_version` is not
+checked for monotonicity. An attacker who controls the CDN or object storage layer
+can serve any previously-signed artifact indefinitely; the SDK verifies it successfully
+and accepts it as valid, even if a newer config has since been published. This is a
+standard limitation of offline signature verification — there is no online authority
+to ask "is this still current?" Short cache TTLs and key rotation bound the exposure
+window but do not eliminate it.
+
 ## Memoization
 
 `MemoizationCache` is a thread-safe in-memory cache keyed by:
@@ -159,7 +167,7 @@ Hot-path performance is <2µs for a cache hit; cold-path (miss + full evaluation
 
 `Bunting` registers for foreground notifications:
 
-- **iOS / tvOS**: `UIApplication.willEnterForegroundNotification`
+- **iOS / tvOS / visionOS**: `UIApplication.willEnterForegroundNotification`
 - **macOS**: `NSApplication.willBecomeActiveNotification`
 
 On each notification, `refresh()` is called. `ConfigStore` applies rate limiting, so

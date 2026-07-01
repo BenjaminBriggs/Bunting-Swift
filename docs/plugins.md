@@ -87,11 +87,11 @@ Given this flag definition:
 Generates:
 ```swift
 extension Bunting {
-    public var store: StoreNamespace {
-        StoreNamespace(bunting: self)
+    public var store: storeNamespace {
+        storeNamespace(bunting: self)
     }
     
-    public struct StoreNamespace {
+    public struct storeNamespace {
         let bunting: Bunting
         
         public var useNewPaywallDesign: Bool {
