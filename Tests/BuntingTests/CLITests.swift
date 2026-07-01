@@ -91,18 +91,11 @@ struct CLITests {
 
     @Test
     func validSignedConfigWithCorrectKey_verifiesAndSavesSuccessfully() throws {
-        let signer = try RSATestSigner(kid: "test-key")
-        let payload = Data(
-            """
-            {"schema_version":1,"config_version":"2026-07-01.1","published_at":"2026-07-01T00:00:00Z","app_identifier":"test-app"}
-            """.utf8)
-        let jws = try signer.detachedJWS(over: payload)
-
         let server = try LocalFixtureServer(routes: [
             "/config.json": LocalFixtureServer.Response(
                 statusCode: 200,
-                headers: ["x-bunting-signature": jws],
-                body: payload)
+                headers: ["x-bunting-signature": SignedConfigFixture.jws],
+                body: SignedConfigFixture.configData)
         ])
         defer { server.stop() }
 
@@ -111,7 +104,7 @@ struct CLITests {
             let outputURL = directory.appendingPathComponent("Output.json")
             try writePlist(
                 endpointURL: "http://127.0.0.1:\(server.port)/config.json",
-                publicKeys: [(kid: signer.kid, pem: signer.publicKeyPEM)],
+                publicKeys: [(kid: "test-key", pem: SignedConfigFixture.pem)],
                 to: plistURL)
 
             let result = try runCLI(arguments: [plistURL.path, outputURL.path])
@@ -121,7 +114,7 @@ struct CLITests {
             #expect(result.stdout.contains("✨ Success!"))
             #expect(FileManager.default.fileExists(atPath: outputURL.path))
             let savedBytes = try Data(contentsOf: outputURL)
-            #expect(savedBytes == payload)
+            #expect(savedBytes == SignedConfigFixture.configData)
         }
     }
 
@@ -129,17 +122,11 @@ struct CLITests {
 
     @Test
     func noHeaderSignature_fallsBackToSigFileAndVerifies() throws {
-        let signer = try RSATestSigner(kid: "test-key")
-        let payload = Data(
-            """
-            {"schema_version":1,"config_version":"2026-07-01.1","published_at":"2026-07-01T00:00:00Z","app_identifier":"test-app"}
-            """.utf8)
-        let jws = try signer.detachedJWS(over: payload)
-
         let server = try LocalFixtureServer(routes: [
-            "/config.json": LocalFixtureServer.Response(statusCode: 200, body: payload),
+            "/config.json": LocalFixtureServer.Response(
+                statusCode: 200, body: SignedConfigFixture.configData),
             "/config.json.sig": LocalFixtureServer.Response(
-                statusCode: 200, body: Data(jws.utf8)),
+                statusCode: 200, body: Data(SignedConfigFixture.jws.utf8)),
         ])
         defer { server.stop() }
 
@@ -148,7 +135,7 @@ struct CLITests {
             let outputURL = directory.appendingPathComponent("Output.json")
             try writePlist(
                 endpointURL: "http://127.0.0.1:\(server.port)/config.json",
-                publicKeys: [(kid: signer.kid, pem: signer.publicKeyPEM)],
+                publicKeys: [(kid: "test-key", pem: SignedConfigFixture.pem)],
                 to: plistURL)
 
             let result = try runCLI(arguments: [plistURL.path, outputURL.path])
@@ -163,22 +150,16 @@ struct CLITests {
 
     @Test
     func tamperedConfigBytes_signatureVerificationFails() throws {
-        let signer = try RSATestSigner(kid: "test-key")
-        let payload = Data(
-            """
-            {"schema_version":1,"config_version":"2026-07-01.1","published_at":"2026-07-01T00:00:00Z","app_identifier":"test-app"}
-            """.utf8)
-        let jws = try signer.detachedJWS(over: payload)
-
-        // The signature is valid for `payload`, but the server serves tampered
-        // bytes — the CLI must verify over the exact bytes it fetched and reject.
-        var tampered = payload
+        // The signature is valid for the fixture's original bytes, but the
+        // server serves tampered bytes — the CLI must verify over the exact
+        // bytes it fetched and reject.
+        var tampered = SignedConfigFixture.configData
         tampered.append(0x20)
 
         let server = try LocalFixtureServer(routes: [
             "/config.json": LocalFixtureServer.Response(
                 statusCode: 200,
-                headers: ["x-bunting-signature": jws],
+                headers: ["x-bunting-signature": SignedConfigFixture.jws],
                 body: tampered)
         ])
         defer { server.stop() }
@@ -188,7 +169,7 @@ struct CLITests {
             let outputURL = directory.appendingPathComponent("Output.json")
             try writePlist(
                 endpointURL: "http://127.0.0.1:\(server.port)/config.json",
-                publicKeys: [(kid: signer.kid, pem: signer.publicKeyPEM)],
+                publicKeys: [(kid: "test-key", pem: SignedConfigFixture.pem)],
                 to: plistURL)
 
             let result = try runCLI(arguments: [plistURL.path, outputURL.path])
@@ -201,29 +182,22 @@ struct CLITests {
 
     @Test
     func wrongPublicKeyForKid_signatureVerificationFails() throws {
-        let signer = try RSATestSigner(kid: "test-key")
-        let otherSigner = try RSATestSigner(kid: "test-key")  // different key pair, same kid
-        let payload = Data(
-            """
-            {"schema_version":1,"config_version":"2026-07-01.1","published_at":"2026-07-01T00:00:00Z","app_identifier":"test-app"}
-            """.utf8)
-        let jws = try signer.detachedJWS(over: payload)
-
         let server = try LocalFixtureServer(routes: [
             "/config.json": LocalFixtureServer.Response(
                 statusCode: 200,
-                headers: ["x-bunting-signature": jws],
-                body: payload)
+                headers: ["x-bunting-signature": SignedConfigFixture.jws],
+                body: SignedConfigFixture.configData)
         ])
         defer { server.stop() }
 
         try SubprocessTestSupport.withTemporaryDirectory { directory in
             let plistURL = directory.appendingPathComponent("BuntingConfig.plist")
             let outputURL = directory.appendingPathComponent("Output.json")
-            // Plist registers the wrong key under the right kid.
+            // Plist registers the secondary fixture's key material under the
+            // primary fixture's kid ("test-key") — right kid, wrong key.
             try writePlist(
                 endpointURL: "http://127.0.0.1:\(server.port)/config.json",
-                publicKeys: [(kid: otherSigner.kid, pem: otherSigner.publicKeyPEM)],
+                publicKeys: [(kid: "test-key", pem: SignedConfigFixture.secondaryPem)],
                 to: plistURL)
 
             let result = try runCLI(arguments: [plistURL.path, outputURL.path])

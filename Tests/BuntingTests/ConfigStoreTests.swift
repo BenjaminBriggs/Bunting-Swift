@@ -12,28 +12,26 @@ import XCTest
 /// admin publishes.
 final class ConfigStoreTests: XCTestCase {
 
+    // Fixture blobs live in SignedConfigFixture (shared with CLITests) —
+    // aliased here under this file's existing names to keep the rest of the
+    // file (and every downstream reference below) unchanged.
+
     // base64 of the exact config.json bytes that were signed.
-    private let configB64 =
-        "eyJzY2hlbWFfdmVyc2lvbiI6MSwiY29uZmlnX3ZlcnNpb24iOiIyMDI2LTA3LTAxLjEiLCJwdWJsaXNoZWRfYXQiOiIyMDI2LTA3LTAxVDAwOjAwOjAwWiIsImFwcF9pZGVudGlmaWVyIjoidGVzdC1hcHAiLCJmbGFncyI6e30sInRlc3RzIjp7fSwicm9sbG91dHMiOnt9fQ=="
+    private let configB64 = SignedConfigFixture.configB64
 
     // base64 of the SPKI public-key PEM matching the JWS below.
-    private let pemB64 =
-        "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFrdjBRR3VUT3V2TGVnZ25MV1c0RwpmVjNVYm4zKzRtTzhsZTB0d2daRkVwRlVMMzBkOEtoY1BYZk0yanVqa0hSSDNWRUlnMG5xaXRGUkdtNitpQzNSCkdJZ1RLbUlIdnNoMi9zaVlvZUpKNnk4Ylc0Vmo1RWtSSFFuMGpBV2V2VnY2c2pySHpqbEJ2TlV1SXdWMnlCSFEKN2tvV1VISGJOS0NwQkh5N3BiaDB1TUNMckkwazBUSFY2dTQ2SmJYTXFmSzFNeFdzNmhRczgzaVJac2RlbnY1TQpZUlpFT3NkYXdNUnhEUXlDemUrekhvV2hqZCtORjF4aEJIOWcvWkF3dHVKTWZwZzI2S0J6TTFuTDhZSm4vRTJiCjMyZkVQTFBYbGt1VzViWHB4U05OMk9kdjcrbXJQd2JHY3VEUXJQekJLa1RnUU1NaXZqUmV3RWQxUUNNbHdHOFIKNndJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
+    private let pemB64 = SignedConfigFixture.pemB64
 
-    private let jws =
-        "eyJhbGciOiJSUzI1NiIsImtpZCI6InRlc3Qta2V5IiwiYjY0IjpmYWxzZSwiY3JpdCI6WyJiNjQiXX0..IXa6m5ELaRplNOXna1nbZRa-9mV0V_LAcShSCZveSoVUz9Fy2KEHaVeQYGz06iaD_lDaafWkV04RnWOFmuZaFHbzlJbZm1IHXzBlbNEIIz5_4O3wmP2kYMEAt8c9mtFNHkcTVjROopAPE8gHNpmNc8gHmPpX7zPjt9DNW0MyK1-8cb6l0RCoDWfqkE64yXZjt-DprKGUM-PLkdSKAWuy6rsxgQ4gU3gLen0rOmzWrA7liphXmXZbzCu0lb9XiQjONGC94KQbfwS0FYpMAcEvFlG5hF-vCgbcnfeGwwNMUAueo2Tk_8OwQoPgrrH04rfW-gMFmvhQ5hBMhp2besEwcQ"
+    private let jws = SignedConfigFixture.jws
 
     // A second fixture: a schema_version:2 payload, signed with a different
     // key (kid "test-key-2"), used to exercise the "signed but undecodable"
-    // fallback path. Generated offline the same way as the fixture above.
-    private let undecodableConfigB64 =
-        "eyJzY2hlbWFfdmVyc2lvbiI6MiwiY29uZmlnX3ZlcnNpb24iOiIyMDI2LTA3LTAxLjIiLCJwdWJsaXNoZWRfYXQiOiIyMDI2LTA3LTAxVDAwOjAwOjAwWiIsImFwcF9pZGVudGlmaWVyIjoidGVzdC1hcHAiLCJmbGFncyI6e30sInRlc3RzIjp7fSwicm9sbG91dHMiOnt9fQ=="
+    // fallback path.
+    private let undecodableConfigB64 = SignedConfigFixture.secondaryConfigB64
 
-    private let undecodablePemB64 =
-        "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF5cGpMcXN0VFZpY2g1Wm9FVnRsMApyZEsxZVZweFhqTW1yVy9QN2dtYnZSdGtvTEMyS1U5clY3Mm1QaFlVMVBFV0dmWGdKYk93aDVxRDU1MkxheTFPCklvUGtZZWM3ZE5kWHRvNnVpRFpHdXhvVy9qaWtDRmxVSk9qcFNrZkZ2LzZmV1Z5bHV6cmxEc0NGUEFjR1ZVZEoKZ0ZNb3VHcVBXZDNLcmtiQ05PVmUveGt0VTNuQUZzdW93L2NzZkVaNWZIaExnbzdjQ2NvUEpENE1Xek04eWZTNAp3cEhsWjZwMDY0QVV2NlMyY05ZQ1ZvSUtMQXhIWlc3TXJMNXVBelNGUFZ5MFl6NG5vc2lqeUQySWtyZXdkSnhUCnQyMllVK3Y5WTBYcTRsOWd3NmdMMWVrZ0JUOVRZUWtZUXg2anlBeUd1SFhQOEtXcmFaN3c1bjBOVFRkTEFqTjAKaFFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
+    private let undecodablePemB64 = SignedConfigFixture.secondaryPemB64
 
-    private let undecodableJWS =
-        "eyJhbGciOiJSUzI1NiIsImtpZCI6InRlc3Qta2V5LTIiLCJiNjQiOmZhbHNlLCJjcml0IjpbImI2NCJdfQ..rgRnuIxa_UjpeK1nNCnwysqTpLugggv-Lz_r6uupX4nVhtubTEYj-Yvuz-6Q_-QK48XYlXO4xh73jQxba5BGxBgkwzO1GRtmiGB1xee_RivtP6feDecTGXkKWI-jO1dT1sTW1ZzI-O6NPovOoeYmueiC1WCa5kAjZrqS6xU8q_8j_xFPtBgzh4QQ0i2BQh0H6eBvwc9Ah1kAapcuMPPvUGepM9m3LBcaiOU6dY9_OuOgPmFkp2KIb9g7ZXzL7KuPuKYW8r3axr6P19ravZ29cbyuN-B-wXRWRdqQUgEprXfW_X7i-oJsgZQzVp5CqTUbj9Ucy1qI7sSfi4uWsXrKtg"
+    private let undecodableJWS = SignedConfigFixture.secondaryJWS
 
     private let configURLString = "https://cdn.example.test/test-app/config.json"
     private var sigURLString: String { configURLString + ".sig" }

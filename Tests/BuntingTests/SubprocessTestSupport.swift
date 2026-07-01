@@ -21,6 +21,13 @@ enum SubprocessTestSupport {
         // invoked with `--test-bundle-path .../<Product>.xctest/Contents/MacOS/<bin>`,
         // so recover the products directory by walking each argument up to the
         // enclosing .xctest package.
+        //
+        // Maintainer note: this leans on an undocumented swiftpm-testing-helper
+        // argv convention (discovered empirically by dumping
+        // ProcessInfo.processInfo.arguments during a debug run), not a stable
+        // public API. If a future toolchain changes that invocation shape, this
+        // fallback silently stops matching and every subprocess test here will
+        // fail with ProductsDirectoryNotFound — check this method first.
         for argument in ProcessInfo.processInfo.arguments {
             var url = URL(fileURLWithPath: argument)
             while url.pathComponents.count > 1 {

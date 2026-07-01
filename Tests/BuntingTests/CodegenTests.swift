@@ -41,6 +41,11 @@ struct CodegenTests {
     /// seed's actual default value, not just its formatting.
     @Test
     func doubleFlagWithWholeNumberSeedGetsDoubleLiteralDefault() throws {
+        // The seed value must be nonzero: a seed of `0` can't distinguish the
+        // fixed behavior (`0.0`, the correct coercion of the seed) from the
+        // pre-fix bug (`0.0`, the hardcoded fallback masking a lost default) —
+        // both would print identically. `2` makes the two cases observably
+        // different (`2.0` vs. the buggy `0.0`).
         let seed = """
             {
               "flags": {
