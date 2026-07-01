@@ -45,4 +45,39 @@ final class SignatureVerificationTests: XCTestCase {
             try JWSVerifier.verifyDetached(jws: jws, payload: config, publicKeys: wrongKeys)
         )
     }
+
+    /// A different RSA-2048 public key registered under the fixture's kid must
+    /// fail — proves the actual cryptographic check gates, not just kid lookup.
+    func testRejectsWrongKeyWithValidKid() {
+        let otherPemB64 =
+            "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUFwbjRvS3c0aWkzNlRyb3U1Vm01cwpMQTFQZWpYL1YvRVBaaFN1dFp5RS92TmlJaWZMVmViR3Rjb1JXVXBrdkQ2ZnprOTc1dWNWY1VmTjArVkNxSjdlCnVhTHduNStBLzdhbmp5c2ljaEVCZzd5WUtSKzIvVXlycHd4b0VoY1ZQbEkrNlhrcmNsNXZYOEhIRkZtVzJQY0EKWVhDaThKUWgwYldaeHdudmhVb3g2MlNhYWR4OTZlUjl3OUUycnJWYUY4WWxCMWlCaXFTZnJYcjRuZ1A1WXA2VApDejBWa3FpaXgyNkg0eThDZlhQRU5hVjgyWkduUmxZYVI1d2p5NGUxUlJYYlBjVytHanNuSUdtcDJtZnNNSHMvClVCb0JhbkRsMDZCRjdycTFMN3JiaGFDeUo3c21TZ0F2VVdGMy9EdWpjZ1V6RHZ0MXVLanBMR3FDVFpoSHE4VUsKalFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg=="
+        let wrongKey = PublicKeyInfo(
+            kid: "fixture-key",
+            pem: String(data: Data(base64Encoded: otherPemB64)!, encoding: .utf8)!
+        )
+        XCTAssertThrowsError(
+            try JWSVerifier.verifyDetached(jws: jws, payload: config, publicKeys: [wrongKey])
+        )
+    }
+
+    /// Detached compact form with the signature segment stripped must be rejected.
+    func testRejectsStrippedSignature() {
+        let protectedSegment = jws.split(separator: ".", omittingEmptySubsequences: false)[0]
+        XCTAssertThrowsError(
+            try JWSVerifier.verifyDetached(
+                jws: "\(protectedSegment)..", payload: config, publicKeys: keys)
+        )
+        XCTAssertThrowsError(
+            try JWSVerifier.verifyDetached(jws: "", payload: config, publicKeys: keys)
+        )
+    }
+
+    /// A two-segment string (attached-style parse of a detached JWS) is malformed.
+    func testRejectsTwoPartJWS() {
+        let parts = jws.split(separator: ".", omittingEmptySubsequences: false)
+        let twoPart = "\(parts[0]).\(parts[2])"
+        XCTAssertThrowsError(
+            try JWSVerifier.verifyDetached(jws: twoPart, payload: config, publicKeys: keys)
+        )
+    }
 }
