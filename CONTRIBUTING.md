@@ -4,7 +4,7 @@
 
 - Swift 6.0+
 - Xcode 16+
-- iOS 18 / macOS 15 / watchOS 11 / tvOS 18 SDK (for platform targets)
+- iOS 18 / macOS 15 / watchOS 11 / tvOS 18 / visionOS 2 SDK (for platform targets)
 
 ## Build and test gate
 

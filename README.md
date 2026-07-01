@@ -18,6 +18,7 @@ A self-hosted, open-source feature flag and rollout system for Apple platforms.
 - macOS 15.0+
 - watchOS 11.0+
 - tvOS 18.0+
+- visionOS 2.0+
 - Swift 6.0+
 - Xcode 16+
 

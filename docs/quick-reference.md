@@ -266,6 +266,7 @@ Each environment has its own default values and variants in the config artifact.
 - macOS 15.0+
 - watchOS 11.0+
 - tvOS 18.0+
+- visionOS 2.0+
 
 ## More Resources
 

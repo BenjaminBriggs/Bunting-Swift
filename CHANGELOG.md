@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - `visionOS` is now correctly detected as the device platform. Previously `EvaluationContext.current()` had no `visionOS` branch, so Vision Pro devices reported platform `"unknown"` and `platform` conditions targeting `"visionOS"` never matched.
+- The package manifest now declares `visionOS 2.0+` as a supported platform, matching the `visionOS` detection above and the admin's existing `visionOS` targeting option.
 - `BuntingInfoView` and `BuntingDebugView` now show the last successful fetch time and the cached ETag instead of blank placeholders.
 - Substantially expanded automated test coverage: the flag evaluator, memoization cache, overrides store, config store (transport, caching, fallback), JWS signature verification, config decoding, codegen output, and the `bunting-cli`/`bunting-codegen` executables all now have dedicated test suites.
 
