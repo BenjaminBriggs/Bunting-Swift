@@ -37,7 +37,13 @@ public struct EvaluationContext: Sendable, Hashable {
     /// Per the two-axis contract, a `device_class` condition against a `nil` value never matches.
     public let deviceClass: String?
 
-    /// The operating system version string (e.g., "18.1")
+    /// The operating system version string, always `"major.minor.patch"` (e.g.,
+    /// `"18.1.0"`) — never omitting a trailing `.0` patch component.
+    ///
+    /// This exact format is the wire contract: it must be stable and machine-parseable
+    /// so `equals`/`between` conditions can match it deterministically. Deliberately
+    /// not the human-readable form (`"Version 18.1 (Build 22C150)"`), which varies by
+    /// platform and can't be compared reliably.
     ///
     /// Used to evaluate version-gated features (e.g., "iOS 18+ only").
     public let osVersion: String
@@ -225,7 +231,12 @@ public struct EvaluationContext: Sendable, Hashable {
             reservedAttributes = [:]
         #endif
 
-        let osVersion = ProcessInfo.processInfo.operatingSystemVersionString
+        // `operatingSystemVersionString` (e.g. "Version 15.5 (Build 24F74)") is a
+        // human-readable, platform-varying string that `equals`/`between` conditions
+        // can never reliably match. Derive the deterministic "major.minor.patch" wire
+        // format from the structured version instead — see the `osVersion` doc comment.
+        let osv = ProcessInfo.processInfo.operatingSystemVersion
+        let osVersion = "\(osv.majorVersion).\(osv.minorVersion).\(osv.patchVersion)"
 
         let deviceModel: String
         #if os(iOS) || os(tvOS)

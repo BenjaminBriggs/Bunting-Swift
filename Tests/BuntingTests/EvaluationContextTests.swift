@@ -17,6 +17,16 @@ struct EvaluationContextTests {
         #expect(context.reservedAttributes["manufacturer"] == "apple")
     }
 
+    @Test("current() osVersion is the deterministic major.minor.patch wire format")
+    func currentOSVersionIsMajorMinorPatch() throws {
+        let context = EvaluationContext.current(appVersion: "1.0.0", buildNumber: "1")
+        let regex = try NSRegularExpression(pattern: "^\\d+\\.\\d+\\.\\d+$")
+        let range = NSRange(context.osVersion.startIndex..., in: context.osVersion)
+        #expect(
+            regex.firstMatch(in: context.osVersion, range: range) != nil,
+            "osVersion \"\(context.osVersion)\" must match ^\\d+\\.\\d+\\.\\d+$")
+    }
+
     @Test("deviceClass participates in the memoization hash")
     func deviceClassChangesHash() {
         let phone = EvaluationContext(
