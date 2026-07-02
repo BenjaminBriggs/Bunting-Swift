@@ -184,7 +184,24 @@ public struct EvaluationContext: Sendable, Hashable {
         let reservedAttributes: [String: String]
         #if os(iOS)
             platform = "ios"
-            deviceClass = UIDevice.current.userInterfaceIdiom == .pad ? "tablet" : "phone"
+            switch UIDevice.current.userInterfaceIdiom {
+            case .pad:
+                deviceClass = "tablet"
+            case .phone:
+                deviceClass = "phone"
+            case .mac:
+                // Mac Catalyst: `os(iOS)` is true and the app is built against the iOS
+                // SDK, but it runs as a Mac app, so the form factor is desktop, not phone.
+                deviceClass = "desktop"
+            case .vision:
+                deviceClass = "headset"
+            case .tv:
+                // Defensive: tvOS builds take the `#os(tvOS)` branch below and never
+                // report `.tv` here, but map it rather than falling through to `nil`.
+                deviceClass = "tv"
+            default:
+                deviceClass = nil
+            }
             reservedAttributes = ["manufacturer": "apple"]
         #elseif os(macOS)
             platform = "macos"
