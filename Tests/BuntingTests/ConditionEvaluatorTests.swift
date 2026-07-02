@@ -14,7 +14,8 @@ final class ConditionEvaluatorTests: XCTestCase {
             buildNumber: "100",
             deviceModel: "iPhone",
             region: "US",
-            language: "en"
+            language: "en",
+            deviceClass: "phone"
         )
     }
 
@@ -194,5 +195,61 @@ final class ConditionEvaluatorTests: XCTestCase {
         )
 
         XCTAssertTrue(evaluator.evaluate(condition), "Should match visionOS platform")
+    }
+
+    func testDeviceClassCondition() {
+        let evaluator = ConditionEvaluator(
+            context: context,
+            customAttributeResolver: { _ in false }
+        )
+        let condition = Condition(
+            type: .deviceClass,
+            values: ["phone", "tablet"],
+            operator: .in
+        )
+        XCTAssertTrue(evaluator.evaluate(condition), "iPhone context (phone) should match [phone, tablet]")
+    }
+
+    func testDeviceClassAbsentDoesNotMatch() {
+        let webContext = EvaluationContext(
+            platform: "web", osVersion: "1", appVersion: "1.0.0", buildNumber: "1",
+            deviceModel: "unknown", region: "US", language: "en",
+            deviceClass: nil, reservedAttributes: [:]
+        )
+        let evaluator = ConditionEvaluator(
+            context: webContext,
+            customAttributeResolver: { _ in false }
+        )
+        let inCondition = Condition(type: .deviceClass, values: ["desktop"], operator: .in)
+        let notInCondition = Condition(type: .deviceClass, values: ["desktop"], operator: .notIn)
+        XCTAssertFalse(evaluator.evaluate(inCondition), "Absent device_class must not match `in`")
+        XCTAssertFalse(evaluator.evaluate(notInCondition), "Absent device_class must not match `not_in`")
+    }
+
+    func testReservedManufacturerAttribute() {
+        let appleContext = EvaluationContext(
+            platform: "ios", osVersion: "18.0", appVersion: "2.5.0", buildNumber: "100",
+            deviceModel: "iPhone", region: "US", language: "en",
+            deviceClass: "phone", reservedAttributes: ["manufacturer": "apple"]
+        )
+        // Resolver returns false for everything: proves the reserved attribute is
+        // resolved internally, not delegated to the app.
+        let evaluator = ConditionEvaluator(
+            context: appleContext,
+            customAttributeResolver: { _ in false }
+        )
+        let matches = Condition(type: .customAttribute, values: ["manufacturer", "apple"], operator: .custom)
+        let misses = Condition(type: .customAttribute, values: ["manufacturer", "samsung"], operator: .custom)
+        XCTAssertTrue(evaluator.evaluate(matches), "manufacturer apple should match [apple]")
+        XCTAssertFalse(evaluator.evaluate(misses), "manufacturer apple should not match [samsung]")
+    }
+
+    func testNonReservedCustomAttributeStillDelegates() {
+        let evaluator = ConditionEvaluator(
+            context: context,
+            customAttributeResolver: { $0 == "is_premium" }
+        )
+        let condition = Condition(type: .customAttribute, values: ["is_premium"], operator: .custom)
+        XCTAssertTrue(evaluator.evaluate(condition), "Non-reserved attribute must still hit the app resolver")
     }
 }

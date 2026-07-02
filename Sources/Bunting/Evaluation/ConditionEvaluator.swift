@@ -23,6 +23,10 @@ struct ConditionEvaluator {
         case .deviceModel:
             return evaluateList(condition, contextValue: context.deviceModel)
 
+        case .deviceClass:
+            guard let deviceClass = context.deviceClass else { return false }
+            return evaluateList(condition, contextValue: deviceClass)
+
         case .region:
             guard let region = context.region else { return false }
             return evaluateList(condition, contextValue: region)
@@ -32,6 +36,10 @@ struct ConditionEvaluator {
 
         case .customAttribute:
             guard let attributeName = condition.values.first else { return false }
+            if let reservedValue = context.reservedAttributes[attributeName] {
+                let accepted = condition.values.dropFirst()
+                return accepted.contains(reservedValue)
+            }
             return customAttributeResolver(attributeName)
         }
     }

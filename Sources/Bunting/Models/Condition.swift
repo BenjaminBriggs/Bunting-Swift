@@ -78,11 +78,15 @@ public enum ConditionType: String, Codable, Sendable, Hashable {
 
     // MARK: List conditions (use `in` / `not_in`)
 
-    /// The OS platform: `"iOS"`, `"iPadOS"`, `"macOS"`, `"watchOS"`, `"tvOS"`, `"visionOS"`
+    /// The OS platform: "ios", "android", "macos", "watchos", "tvos", "visionos", "web"
     case platform
 
     /// The device model identifier (e.g., `"iPhone16,2"`)
     case deviceModel = "device_model"
+
+    /// The device form factor: `"phone"`, `"tablet"`, `"desktop"`, `"tv"`, `"watch"`, `"headset"`.
+    /// Orthogonal to ``platform`` — an iPad is `platform: "ios"` + `device_class: "tablet"`.
+    case deviceClass = "device_class"
 
     /// The device's region/country code (e.g., `"US"`, `"GB"`)
     case region
