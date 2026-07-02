@@ -304,6 +304,43 @@ struct FlagEvaluatorTests {
         #expect(evaluator.evaluate(flagKey: "greeting") == .string("shadowing-value"))
     }
 
+    @Test("resolvePathIndex resolves a nil-conditions conditional variant, matching evaluate's vacuous match")
+    func resolvePathIndexNilConditionsParity() throws {
+        // Carry-forward coverage for the fingerprint path selector: resolvePathIndex
+        // mirrors evaluate(flagKey:)'s vacuous-match treatment of nil conditions, but
+        // had no direct test of its own for that case.
+        let variant = Variant(
+            type: .conditional,
+            order: 1,
+            value: .string("matched"),
+            values: nil,
+            conditions: nil,
+            test: nil,
+            rollout: nil
+        )
+
+        let flag = Flag(
+            type: .string,
+            description: nil,
+            development: EnvironmentConfig(default: .string("default"), variants: [variant]),
+            beta: EnvironmentConfig(default: .string("default"), variants: []),
+            production: EnvironmentConfig(default: .string("default"), variants: [])
+        )
+
+        let evaluator = FlagEvaluator(
+            configuration: makeConfig(flags: ["greeting": flag]),
+            environment: .development,
+            context: Self.context,
+            localID: UUID(),
+            customAttributeResolver: { _ in false }
+        )
+
+        // paths[0] is the default, paths[1] is the nil-conditions conditional variant.
+        #expect(evaluator.pathCount(flagKey: "greeting") == 2)
+        #expect(evaluator.resolvePathIndex(flagKey: "greeting") == 1)
+        #expect(evaluator.evaluate(flagKey: "greeting") == .string("matched"))
+    }
+
     // MARK: - Environment selection
 
     @Test("Environment selection picks the matching EnvironmentConfig")
