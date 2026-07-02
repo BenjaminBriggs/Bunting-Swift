@@ -154,7 +154,7 @@ Run tests only for specific audiences:
         {
           "type": "platform",
           "operator": "in",
-          "values": ["iOS"]
+          "values": ["ios"]
         }
       ]
     }
@@ -392,14 +392,14 @@ Run different tests based on platform:
       {
         "type": "platform",
         "operator": "in",
-        "values": ["iOS"]
+        "values": ["ios"]
       }
     ]
   }
 }
 ```
 
-Note: Bunting supports Apple platforms only. Android is not a supported platform value.
+Note: this SDK only ever runs on Apple platforms, so `EvaluationContext.current()` never reports anything but `ios`, `macos`, `watchos`, `tvos`, or `visionos`. The `platform` condition's value space is broader (`android`, `web`, etc. are valid wire values for the admin's cross-platform targeting model), but conditions targeting non-Apple platforms simply never match from this SDK.
 
 ### Test + Killswitch
 

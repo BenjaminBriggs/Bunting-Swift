@@ -170,7 +170,7 @@ Roll out to iOS first, then other platforms:
         {
           "type": "platform",
           "operator": "in",
-          "values": ["iOS"]
+          "values": ["ios"]
         }
       ]
     },
@@ -181,7 +181,7 @@ Roll out to iOS first, then other platforms:
         {
           "type": "platform",
           "operator": "in",
-          "values": ["macOS"]
+          "values": ["macos"]
         }
       ]
     }
@@ -353,7 +353,7 @@ Disable for specific platforms while investigating:
         {
           "type": "platform",
           "operator": "in",
-          "values": ["iOS"]
+          "values": ["ios"]
         }
       ]
     },
@@ -416,7 +416,7 @@ Roll out to each platform at different speeds:
         {
           "type": "platform",
           "operator": "in",
-          "values": ["iOS"]
+          "values": ["ios"]
         }
       ]
     },
@@ -429,7 +429,7 @@ Roll out to each platform at different speeds:
         {
           "type": "platform",
           "operator": "in",
-          "values": ["macOS"]
+          "values": ["macos"]
         }
       ]
     }

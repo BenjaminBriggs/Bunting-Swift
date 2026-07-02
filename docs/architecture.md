@@ -55,7 +55,19 @@ First match wins. No variant is reconsidered after a match.
 |---|---|
 | `os_version`, `app_version`, `build_number` | `equals`, `does_not_equals`, `between`, `greater_than`, `greater_than_or_equal`, `less_than`, `less_than_or_equal` |
 | `platform`, `device_model`, `region`, `language` | `in`, `not_in` (exact match) |
+| `device_class` | `in`, `not_in` (exact match); a condition against an absent context value never matches |
 | `custom_attribute` | `custom` — delegates to the app-supplied resolver closure |
+
+`platform` and `device_class` are orthogonal axes, not a hierarchy: an iPad reports
+`platform: "ios"` and `device_class: "tablet"`, not a separate `"ipados"` platform value.
+`platform` values are lowercase wire strings (`ios`, `android`, `macos`, `watchos`, `tvos`,
+`visionos`, `web`; `unknown` if undetected). `device_class` values are `phone`, `tablet`,
+`desktop`, `tv`, `watch`, `headset`.
+
+`custom_attribute` conditions first check `EvaluationContext.reservedAttributes` — a
+small set of SDK-populated attributes (currently just `manufacturer`, always `"apple"`
+on Apple platforms) — before falling through to the app-supplied resolver closure. This
+lets the admin target `custom_attribute` rules against `manufacturer` without any app code.
 
 Conditions within a list are ANDed. There is no built-in OR; use separate variants with
 lower `order` values to express OR logic.
@@ -154,7 +166,8 @@ window but do not eliminate it.
 ```
 
 `contextHash` is a stable hash of the `EvaluationContext` fields that affect condition
-evaluation (platform, OS version, app version, build number, device model, region, language).
+evaluation (platform, device class, OS version, app version, build number, device model,
+region, language, and reserved attributes such as `manufacturer`).
 The cache is invalidated:
 
 - Entirely: on config refresh, environment switch, or `clearAllOverrides()`

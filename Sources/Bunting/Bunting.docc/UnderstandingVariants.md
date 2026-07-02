@@ -29,10 +29,15 @@ The first variant whose conditions match is returned immediately. No further var
 Conditional variants return a value when all their conditions evaluate to true.
 
 **Use cases:**
-- Platform-specific features (iOS-only, macOS-only)
+- Platform-specific features (ios-only, macos-only)
+- Device-class-specific features (phone vs. tablet vs. desktop)
 - Version gating (iOS 18+, app version 2.0+)
 - Region-specific features (US-only, EU-only)
 - Language targeting (specific languages)
+
+`platform` and `device_class` are orthogonal axes: an iPad is `platform: "ios"` with
+`device_class: "tablet"`, not a separate `"ipados"` platform value. Use `platform` to
+target an OS family and `device_class` to target a form factor within it.
 
 **Example:**
 ```json
@@ -44,7 +49,12 @@ Conditional variants return a value when all their conditions evaluate to true.
     {
       "type": "platform",
       "operator": "in",
-      "values": ["iOS"]
+      "values": ["ios"]
+    },
+    {
+      "type": "device_class",
+      "operator": "in",
+      "values": ["tablet"]
     },
     {
       "type": "os_version",
@@ -55,7 +65,7 @@ Conditional variants return a value when all their conditions evaluate to true.
 }
 ```
 
-This variant returns `true` only for iOS 18+ users.
+This variant returns `true` only for iPad users (`platform: "ios"` + `device_class: "tablet"`) on iOS 18+.
 
 ### Test Variants
 
@@ -187,7 +197,7 @@ All variant types can have additional conditions. The variant only matches if:
     {
       "type": "platform",
       "operator": "in",
-      "values": ["iOS"]
+      "values": ["ios"]
     }
   ]
 }
@@ -242,7 +252,7 @@ Run an A/B test only on iOS:
       {
         "type": "platform",
         "operator": "in",
-        "values": ["iOS"]
+        "values": ["ios"]
       }
     ]
   }

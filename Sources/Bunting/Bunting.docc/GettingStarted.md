@@ -26,7 +26,10 @@ Or in Xcode:
 ## Create Bootstrap Configuration
 
 Create a file named `BuntingConfig.plist` in your app bundle with your CDN configuration
-(ensure **Target Membership** is checked in Xcode):
+(ensure **Target Membership** is checked in Xcode). The admin can generate this file for
+you at `GET /api/bootstrap/plist?appIdentifier=<your-app>`; a platform-neutral JSON
+equivalent of the same bootstrap document is also available at `/api/bootstrap/json` for
+non-Apple consumers — Apple apps should keep using the plist:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
