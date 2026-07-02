@@ -246,6 +246,28 @@ final class ConditionEvaluatorTests: XCTestCase {
         XCTAssertFalse(evaluator.evaluate(misses), "manufacturer apple should not match [samsung]")
     }
 
+    func testReservedAttributeAbsentNeverDelegatesToResolver() {
+        // Context populates no reserved attributes at all (e.g. an unrecognized
+        // platform). A resolver that would say "yes" to everything must never be
+        // consulted for a reserved name: absent means no match, full stop.
+        let noReservedContext = EvaluationContext(
+            platform: "web", osVersion: "1", appVersion: "1.0.0", buildNumber: "1",
+            deviceModel: "unknown", region: "US", language: "en",
+            deviceClass: nil, reservedAttributes: [:]
+        )
+        nonisolated(unsafe) var resolverCalled = false
+        let evaluator = ConditionEvaluator(
+            context: noReservedContext,
+            customAttributeResolver: { _ in
+                resolverCalled = true
+                return true
+            }
+        )
+        let condition = Condition(type: .customAttribute, values: ["manufacturer", "apple"], operator: .custom)
+        XCTAssertFalse(evaluator.evaluate(condition), "Absent reserved attribute must not match")
+        XCTAssertFalse(resolverCalled, "App resolver must never be called for a reserved attribute name")
+    }
+
     func testNonReservedCustomAttributeStillDelegates() {
         let evaluator = ConditionEvaluator(
             context: context,

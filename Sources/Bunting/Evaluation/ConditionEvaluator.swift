@@ -36,7 +36,13 @@ struct ConditionEvaluator {
 
         case .customAttribute:
             guard let attributeName = condition.values.first else { return false }
-            if let reservedValue = context.reservedAttributes[attributeName] {
+            if EvaluationContext.reservedAttributeNames.contains(attributeName) {
+                // Reserved names resolve only from the SDK-populated dictionary, never
+                // the app resolver — an absent reserved value is a non-match, not a
+                // fallthrough (the absent-field rule).
+                guard let reservedValue = context.reservedAttributes[attributeName] else {
+                    return false
+                }
                 let accepted = condition.values.dropFirst()
                 return accepted.contains(reservedValue)
             }

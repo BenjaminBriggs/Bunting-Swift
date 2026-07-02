@@ -72,6 +72,16 @@ public struct EvaluationContext: Sendable, Hashable {
     /// attribute name. Conditions target these through the `custom_attribute` machinery.
     public let reservedAttributes: [String: String]
 
+    /// The normative set of `custom_attribute` names the SDK reserves for itself.
+    ///
+    /// This list — not the contents of any particular ``reservedAttributes`` dictionary —
+    /// is the source of truth for whether a `custom_attribute` condition is reserved.
+    /// A reserved name is always resolved internally from ``reservedAttributes``: present
+    /// → membership check against the condition's accepted values; absent → no match. The
+    /// app-supplied `customAttributes` resolver is never consulted for a reserved name,
+    /// even if the context happens not to populate it (e.g. an unrecognized platform).
+    public static let reservedAttributeNames: Set<String> = ["manufacturer"]
+
     /// Creates an evaluation context with explicit values
     ///
     /// - Parameters:

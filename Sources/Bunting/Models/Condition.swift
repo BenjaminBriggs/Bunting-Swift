@@ -38,8 +38,12 @@ public struct Condition: Codable, Sendable, Hashable {
     ///
     /// Interpretation depends on `type` and `operator`:
     /// - Version conditions: a single version string, or two strings for `between`
-    /// - List conditions (`in`, `not_in`): one or more values (e.g., `["iOS"]`)
-    /// - `custom_attribute`: a single string naming the attribute (`values[0]`)
+    /// - List conditions (`in`, `not_in`): one or more values (e.g., `["ios"]`)
+    /// - `custom_attribute`: `values[0]` names the attribute. For a name in
+    ///   ``EvaluationContext/reservedAttributeNames`` (e.g. `manufacturer`), `values[1...]`
+    ///   are the accepted values, checked for membership against the SDK-populated
+    ///   `EvaluationContext.reservedAttributes` value. For any other name, only
+    ///   `values[0]` is used and the app's `customAttributes` resolver decides the match.
     /// - `language`: one or more bare language codes (e.g., `["en", "es"]`)
     public let values: [String]
 
@@ -96,8 +100,14 @@ public enum ConditionType: String, Codable, Sendable, Hashable {
 
     // MARK: Custom conditions
 
-    /// A custom, app-defined attribute; `values[0]` names the attribute,
-    /// resolved at runtime via the `customAttributes` closure passed to ``Bunting/configure(environment:context:keychainAccessGroup:customAttributes:)``
+    /// A custom attribute; `values[0]` names the attribute.
+    ///
+    /// For most names, resolution delegates at runtime to the `customAttributes` closure
+    /// passed to ``Bunting/configure(environment:context:keychainAccessGroup:customAttributes:)``.
+    /// Names in ``EvaluationContext/reservedAttributeNames`` (e.g. `manufacturer`) are the
+    /// exception: they're reserved for the SDK and are always resolved internally from
+    /// `EvaluationContext.reservedAttributes`, never delegated to the app resolver — see
+    /// ``Condition/values`` for the reserved encoding.
     case customAttribute = "custom_attribute"
 }
 
