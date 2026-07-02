@@ -16,6 +16,15 @@ final class LocalFixtureServer {
         }
     }
 
+    /// Thrown by `init` when the listener never reaches `.ready`, or when the
+    /// post-start self-test connection can't reach it. Surfacing this at setup
+    /// time (milliseconds) beats letting every dependent test time out
+    /// individually (60s each) against a server that was never actually
+    /// reachable.
+    struct SetupFailure: Error, CustomStringConvertible {
+        let description: String
+    }
+
     private let listener: NWListener
     let port: UInt16
     private let routes: [String: Response]
@@ -28,16 +37,29 @@ final class LocalFixtureServer {
         // Build against a local variable throughout so the setup closures below
         // don't capture `self` (the class isn't Sendable, and NWListener's
         // handlers run on an arbitrary queue).
-        let newListener = try NWListener(using: .tcp, on: .any)
+        //
+        // Bind explicitly to the loopback interface. `.any` binds all interfaces
+        // (0.0.0.0), which on GitHub Actions' macOS runners gets silently
+        // dropped by the application firewall for incoming connections — the
+        // client-side connect() never gets a RST, it just hangs until the
+        // request times out. A loopback-scoped local endpoint avoids that path
+        // entirely.
+        let parameters: NWParameters = .tcp
+        parameters.requiredLocalEndpoint = NWEndpoint.hostPort(host: "127.0.0.1", port: .any)
+        let newListener = try NWListener(using: parameters)
 
         let semaphore = DispatchSemaphore(value: 0)
-        let portBox = PortBox()
-        newListener.stateUpdateHandler = { [portBox] state in
-            if case .ready = state {
-                portBox.value = newListener.port?.rawValue ?? 0
+        let stateBox = StateBox()
+        newListener.stateUpdateHandler = { [stateBox] state in
+            switch state {
+            case .ready:
+                stateBox.port = newListener.port?.rawValue ?? 0
                 semaphore.signal()
-            } else if case .failed = state {
+            case .failed(let error):
+                stateBox.failure = error
                 semaphore.signal()
+            default:
+                break
             }
         }
         newListener.newConnectionHandler = { [routes] connection in
@@ -47,8 +69,75 @@ final class LocalFixtureServer {
         newListener.start(queue: queue)
         semaphore.wait()
 
+        if let failure = stateBox.failure {
+            throw SetupFailure(description: "LocalFixtureServer listener failed to start: \(failure)")
+        }
+        guard stateBox.port != 0 else {
+            throw SetupFailure(description: "LocalFixtureServer listener reached .ready with no assigned port")
+        }
+
         self.listener = newListener
-        self.port = portBox.value
+        self.port = stateBox.port
+
+        // Self-test: dial the port we just bound before handing the server to
+        // the caller. If this hangs or fails, it means the listener is up but
+        // unreachable (e.g. a runner-side firewall silently dropping incoming
+        // connections) — fail fast here with a clear message instead of
+        // letting every dependent test independently discover it via a 60s
+        // request timeout.
+        try LocalFixtureServer.selfTest(port: stateBox.port)
+    }
+
+    private static func selfTest(port: UInt16) throws {
+        guard let nwPort = NWEndpoint.Port(rawValue: port) else {
+            throw SetupFailure(description: "LocalFixtureServer self-test: invalid port \(port)")
+        }
+        let connection = NWConnection(host: "127.0.0.1", port: nwPort, using: .tcp)
+        let semaphore = DispatchSemaphore(value: 0)
+        let resultBox = SelfTestResultBox()
+        connection.stateUpdateHandler = { [resultBox] state in
+            switch state {
+            case .ready:
+                resultBox.reachable = true
+                semaphore.signal()
+            case .failed(let error):
+                resultBox.error = error
+                semaphore.signal()
+            default:
+                break
+            }
+        }
+        connection.start(queue: .global())
+        let timedOut = semaphore.wait(timeout: .now() + 3) == .timedOut
+        connection.cancel()
+
+        if timedOut {
+            throw SetupFailure(
+                description:
+                    "LocalFixtureServer self-test: no response connecting to 127.0.0.1:\(port) within 3s "
+                    + "(listener is bound but unreachable — likely blocked by a local firewall/sandbox)")
+        }
+        if let error = resultBox.error {
+            throw SetupFailure(
+                description: "LocalFixtureServer self-test: failed to connect to 127.0.0.1:\(port): \(error)")
+        }
+        guard resultBox.reachable else {
+            throw SetupFailure(description: "LocalFixtureServer self-test: connection to 127.0.0.1:\(port) never became ready")
+        }
+    }
+
+    /// Reference box carrying the listener's post-`.ready` port or `.failed` error
+    /// out of `stateUpdateHandler` without capturing `self`.
+    private final class StateBox: @unchecked Sendable {
+        var port: UInt16 = 0
+        var failure: NWError?
+    }
+
+    /// Reference box carrying the self-test connection's outcome out of its
+    /// `stateUpdateHandler` without capturing `self`.
+    private final class SelfTestResultBox: @unchecked Sendable {
+        var reachable = false
+        var error: NWError?
     }
 
     /// A tiny reference box so the state-update closure can report the
