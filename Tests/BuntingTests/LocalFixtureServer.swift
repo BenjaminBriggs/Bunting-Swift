@@ -99,12 +99,20 @@ final class LocalFixtureServer {
         // the caller. If this hangs or fails, the listener is up but
         // unreachable — fail fast here with a clear message instead of
         // letting every dependent test independently discover it via a 60s
-        // request timeout.
-        try LocalFixtureServer.selfTest(port: self.port)
+        // request timeout. On failure, tear down the same way `stop()` does
+        // so we don't leak the accept-loop thread and its blocked accept().
+        do {
+            try LocalFixtureServer.selfTest(port: self.port)
+        } catch {
+            stop()
+            throw error
+        }
     }
 
     func stop() {
-        stopFlag.set()
+        // Idempotent: a second call must not close `listenSocket` again —
+        // by then the fd number may have been reused for something else.
+        guard stopFlag.setAndWasAlreadyStopped() == false else { return }
         // Closing the listening socket unblocks the accept() loop's blocking
         // call on the accept thread.
         close(listenSocket)
@@ -122,10 +130,28 @@ final class LocalFixtureServer {
                 }
             }
             if clientFD < 0 {
-                // Either a transient accept() error or `stop()` closed the
-                // listening socket out from under us — the loop condition
-                // handles the latter on the next iteration.
-                continue
+                let acceptErrno = errno
+                switch acceptErrno {
+                case EINTR, ECONNABORTED:
+                    // Transient — retry accept() on the same (still valid)
+                    // listening socket.
+                    continue
+                default:
+                    if acceptErrno == EBADF || stopFlag.isStopped {
+                        // Expected shutdown: `stop()` closed the listening
+                        // socket out from under us.
+                        return
+                    }
+                    // Anything else is unexpected and, left unhandled, would
+                    // busy-spin at 100% CPU retrying a persistently-failing
+                    // accept(). Log once and stop — a dead fixture server
+                    // fails the self-test/dependent tests loudly anyway.
+                    let message =
+                        "LocalFixtureServer: accept() failed (errno \(acceptErrno): "
+                        + "\(String(cString: strerror(acceptErrno)))); stopping accept loop\n"
+                    FileHandle.standardError.write(Data(message.utf8))
+                    return
+                }
             }
             Thread.detachNewThread {
                 LocalFixtureServer.handleConnection(fd: clientFD, routes: routes)
@@ -166,7 +192,11 @@ final class LocalFixtureServer {
                 guard let base = pointer.baseAddress else { return 0 }
                 return read(fd, base, pointer.count)
             }
-            guard bytesRead > 0 else { break }
+            if bytesRead < 0 {
+                if errno == EINTR { continue }
+                break
+            }
+            guard bytesRead > 0 else { break }  // 0: peer closed
             buffer.append(contentsOf: chunk[0..<bytesRead])
             if contains(buffer, terminator) {
                 break
@@ -209,7 +239,11 @@ final class LocalFixtureServer {
             var totalWritten = 0
             while totalWritten < pointer.count {
                 let n = write(fd, base + totalWritten, pointer.count - totalWritten)
-                if n <= 0 { break }
+                if n < 0 {
+                    if errno == EINTR { continue }
+                    break
+                }
+                guard n > 0 else { break }
                 totalWritten += n
             }
         }
@@ -278,10 +312,16 @@ final class LocalFixtureServer {
         private let lock = NSLock()
         private var stopped = false
 
-        func set() {
+        /// Atomically marks stopped and reports whether it was already
+        /// stopped before this call, so callers can tell "I just stopped it"
+        /// from "someone else already did" and act (e.g. close a socket)
+        /// exactly once.
+        func setAndWasAlreadyStopped() -> Bool {
             lock.lock()
+            defer { lock.unlock() }
+            let wasStopped = stopped
             stopped = true
-            lock.unlock()
+            return wasStopped
         }
 
         var isStopped: Bool {
