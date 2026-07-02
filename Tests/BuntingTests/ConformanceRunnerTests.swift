@@ -16,6 +16,28 @@ struct ConformanceRunnerTests {
         return try Data(contentsOf: url)
     }
 
+    // MARK: Manifest
+
+    /// The bundle's own case counts per set, checked against each decoded set below so
+    /// a truncated or partially-vendored fixture file fails loudly instead of silently
+    /// under-testing.
+    struct Manifest: Decodable {
+        let version: String
+        let sets: [String: SetInfo]
+        struct SetInfo: Decodable {
+            let file: String
+            let count: Int
+        }
+    }
+
+    private func loadManifest() throws -> Manifest {
+        try JSONDecoder().decode(Manifest.self, from: load("manifest"))
+    }
+
+    private func expectedCount(_ manifest: Manifest, _ set: String) throws -> Int {
+        try #require(manifest.sets[set]?.count, "manifest is missing set \(set)")
+    }
+
     // MARK: Bucketing
 
     struct BucketingSet: Decodable {
@@ -32,7 +54,9 @@ struct ConformanceRunnerTests {
     }
 
     @Test func bucketingVectors() throws {
+        let manifest = try loadManifest()
         let set = try JSONDecoder().decode(BucketingSet.self, from: load("bucketing"))
+        #expect(set.cases.count == (try expectedCount(manifest, "bucketing")))
         // Per the bundle contract, run every case not explicitly flagged
         // swift_applicable:false. Those are canonical UUID identifiers the SDK can
         // reproduce; the flagged-out cases use non-UUID strings that only the
@@ -86,8 +110,9 @@ struct ConformanceRunnerTests {
     }
 
     @Test func evaluationVectors() throws {
+        let manifest = try loadManifest()
         let set = try JSONDecoder().decode(EvaluationSet.self, from: load("evaluation"))
-        #expect(set.cases.isEmpty == false)
+        #expect(set.cases.count == (try expectedCount(manifest, "evaluation")))
         for c in set.cases {
             let env = try #require(BuntingEnvironment(rawValue: c.environment))
             let localID = try #require(UUID(uuidString: c.context.localID))
@@ -117,8 +142,9 @@ struct ConformanceRunnerTests {
     }
 
     @Test func fingerprintVectors() throws {
+        let manifest = try loadManifest()
         let set = try JSONDecoder().decode(FingerprintSet.self, from: load("fingerprint"))
-        #expect(set.cases.isEmpty == false)
+        #expect(set.cases.count == (try expectedCount(manifest, "fingerprint")))
         for c in set.cases {
             let env = try #require(BuntingEnvironment(rawValue: c.environment))
             let localID = try #require(UUID(uuidString: c.context.localID))
@@ -150,8 +176,9 @@ struct ConformanceRunnerTests {
     }
 
     @Test func signatureVectors() throws {
+        let manifest = try loadManifest()
         let set = try JSONDecoder().decode(SignatureSet.self, from: load("signature"))
-        #expect(set.cases.isEmpty == false)
+        #expect(set.cases.count == (try expectedCount(manifest, "signature")))
         for c in set.cases {
             let payload = try #require(Data(base64Encoded: c.configB64))
             var didThrow = false
@@ -170,10 +197,11 @@ struct ConformanceRunnerTests {
     // MARK: Bootstrap (contract-level: required fields present + endpoint ends in config.json)
 
     @Test func bootstrapVectors() throws {
+        let manifest = try loadManifest()
         let root = try #require(
             try JSONSerialization.jsonObject(with: load("bootstrap")) as? [String: Any])
         let cases = try #require(root["cases"] as? [[String: Any]])
-        #expect(cases.isEmpty == false)
+        #expect(cases.count == (try expectedCount(manifest, "bootstrap")))
         for c in cases {
             let expectedValid = (c["valid"] as? Bool) ?? false
             let document = (c["document"] as? [String: Any]) ?? [:]
