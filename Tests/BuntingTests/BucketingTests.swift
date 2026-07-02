@@ -47,16 +47,4 @@ final class BucketingTests: XCTestCase {
         // While not guaranteed to be different, it's extremely likely
         XCTAssertNotEqual(bucket1, bucket2, "Different IDs should produce different buckets")
     }
-
-    func testKnownVector() {
-        // Test against a known vector to ensure algorithm matches spec
-        let salt = "unique-salt"
-        let uuid = UUID(uuidString: "550e8400-e29b-41d4-a716-446655440000")!
-
-        let bucket = Bucketing.bucket(salt: salt, localID: uuid)
-
-        // This should be consistent across all SDK implementations
-        // The exact value depends on SHA-256("unique-salt:550E8400-E29B-41D4-A716-446655440000")
-        XCTAssertTrue(bucket >= 1 && bucket <= 100, "Bucket should be in valid range")
-    }
 }

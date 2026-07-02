@@ -408,21 +408,6 @@ struct TestAndRolloutEvaluationTests {
     }
 }
 
-// Helper extension for FlagValue comparison
-extension FlagValue: Equatable {
-    public static func == (lhs: FlagValue, rhs: FlagValue) -> Bool {
-        switch (lhs, rhs) {
-        case (.boolean(let l), .boolean(let r)): return l == r
-        case (.string(let l), .string(let r)): return l == r
-        case (.integer(let l), .integer(let r)): return l == r
-        case (.double(let l), .double(let r)): return l == r
-        case (.date(let l), .date(let r)): return l == r
-        case (.json(let l), .json(let r)): return l == r
-        default: return false
-        }
-    }
-}
-
 // Helper extension to get string value from FlagValue
 extension FlagValue {
     var stringValue: String? {

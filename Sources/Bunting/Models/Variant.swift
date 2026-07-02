@@ -225,3 +225,5 @@ public enum FlagValue: Codable, Sendable {
         }
     }
 }
+
+extension FlagValue: Equatable {}

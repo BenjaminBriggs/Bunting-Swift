@@ -52,7 +52,8 @@ let package = Package(
         .testTarget(
             name: "BuntingTests",
             dependencies: ["Bunting", "BuntingVerify"],
-            path: "Tests/BuntingTests"
+            path: "Tests/BuntingTests",
+            resources: [.copy("Conformance")]
         ),
 
         // Command-line tool for fetching configuration
