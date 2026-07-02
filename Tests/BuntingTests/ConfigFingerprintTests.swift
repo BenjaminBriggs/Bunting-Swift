@@ -13,7 +13,7 @@ struct ConfigFingerprintTests {
 
     private func context(buildNumber: String = "1000") -> EvaluationContext {
         EvaluationContext(
-            platform: "iOS",
+            platform: "ios",
             osVersion: "18.0",
             appVersion: "2.0.0",
             buildNumber: buildNumber,

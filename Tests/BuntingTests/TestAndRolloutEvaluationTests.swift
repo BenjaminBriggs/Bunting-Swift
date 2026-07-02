@@ -55,7 +55,7 @@ struct TestAndRolloutEvaluationTests {
         )
 
         let context = EvaluationContext(
-            platform: "iOS",
+            platform: "ios",
             osVersion: "18.0",
             appVersion: "1.0.0",
             buildNumber: "1",
@@ -138,7 +138,7 @@ struct TestAndRolloutEvaluationTests {
         )
 
         let context = EvaluationContext(
-            platform: "iOS",
+            platform: "ios",
             osVersion: "18.0",
             appVersion: "1.0.0",
             buildNumber: "1",
@@ -182,7 +182,7 @@ struct TestAndRolloutEvaluationTests {
             conditions: [
                 Condition(
                     type: .platform,
-                    values: ["iOS"],
+                    values: ["ios"],
                     operator: .in
                 )
             ],
@@ -225,7 +225,7 @@ struct TestAndRolloutEvaluationTests {
 
         // Test on macOS - should fail precondition
         let macContext = EvaluationContext(
-            platform: "macOS",
+            platform: "macos",
             osVersion: "15.0",
             appVersion: "1.0.0",
             buildNumber: "1",
@@ -247,7 +247,7 @@ struct TestAndRolloutEvaluationTests {
 
         // Test on iOS - should pass precondition
         let iosContext = EvaluationContext(
-            platform: "iOS",
+            platform: "ios",
             osVersion: "18.0",
             appVersion: "1.0.0",
             buildNumber: "1",
@@ -311,7 +311,7 @@ struct TestAndRolloutEvaluationTests {
         )
 
         let context = EvaluationContext(
-            platform: "iOS",
+            platform: "ios",
             osVersion: "18.0",
             appVersion: "1.0.0",
             buildNumber: "1",
@@ -380,7 +380,7 @@ struct TestAndRolloutEvaluationTests {
         )
 
         let context = EvaluationContext(
-            platform: "iOS",
+            platform: "ios",
             osVersion: "18.0",
             appVersion: "1.0.0",
             buildNumber: "1",

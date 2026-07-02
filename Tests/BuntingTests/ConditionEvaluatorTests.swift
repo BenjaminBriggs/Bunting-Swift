@@ -8,7 +8,7 @@ final class ConditionEvaluatorTests: XCTestCase {
     override func setUp() {
         super.setUp()
         context = EvaluationContext(
-            platform: "iOS",
+            platform: "ios",
             osVersion: "18.0",
             appVersion: "2.5.0",
             buildNumber: "100",
@@ -27,11 +27,11 @@ final class ConditionEvaluatorTests: XCTestCase {
 
         let condition = Condition(
             type: .platform,
-            values: ["iOS", "iPadOS"],
+            values: ["ios"],
             operator: .in
         )
 
-        XCTAssertTrue(evaluator.evaluate(condition), "Should match iOS platform")
+        XCTAssertTrue(evaluator.evaluate(condition), "Should match ios platform")
     }
 
     func testPlatformNotIn() {
@@ -42,7 +42,7 @@ final class ConditionEvaluatorTests: XCTestCase {
 
         let condition = Condition(
             type: .platform,
-            values: ["Android", "Web"],
+            values: ["android", "web"],
             operator: .notIn
         )
 
@@ -148,7 +148,7 @@ final class ConditionEvaluatorTests: XCTestCase {
         )
 
         let conditions = [
-            Condition(type: .platform, values: ["iOS"], operator: .in),
+            Condition(type: .platform, values: ["ios"], operator: .in),
             Condition(type: .region, values: ["US"], operator: .in),
         ]
 
@@ -162,7 +162,7 @@ final class ConditionEvaluatorTests: XCTestCase {
         )
 
         let conditions = [
-            Condition(type: .platform, values: ["iOS"], operator: .in),
+            Condition(type: .platform, values: ["ios"], operator: .in),
             Condition(type: .region, values: ["GB"], operator: .in),
         ]
 
@@ -175,13 +175,15 @@ final class ConditionEvaluatorTests: XCTestCase {
         // path with an injected context (see EvaluationContext.current()'s
         // #if os(visionOS) branch for the platform derivation itself).
         let visionContext = EvaluationContext(
-            platform: "visionOS",
+            platform: "visionos",
             osVersion: "2.0",
             appVersion: "1.0.0",
             buildNumber: "1",
             deviceModel: "Apple Vision Pro",
             region: "US",
-            language: "en"
+            language: "en",
+            deviceClass: "headset",
+            reservedAttributes: ["manufacturer": "apple"]
         )
         let evaluator = ConditionEvaluator(
             context: visionContext,
@@ -190,7 +192,7 @@ final class ConditionEvaluatorTests: XCTestCase {
 
         let condition = Condition(
             type: .platform,
-            values: ["visionOS"],
+            values: ["visionos"],
             operator: .in
         )
 

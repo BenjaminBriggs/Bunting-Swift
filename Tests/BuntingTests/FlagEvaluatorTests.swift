@@ -12,7 +12,7 @@ import Testing
 struct FlagEvaluatorTests {
 
     private static let context = EvaluationContext(
-        platform: "iOS",
+        platform: "ios",
         osVersion: "18.0",
         appVersion: "1.0.0",
         buildNumber: "1",
@@ -51,7 +51,7 @@ struct FlagEvaluatorTests {
             order: 2,
             value: .string("always-value"),
             values: nil,
-            conditions: [Condition(type: .platform, values: ["iOS"], operator: .in)],
+            conditions: [Condition(type: .platform, values: ["ios"], operator: .in)],
             test: nil,
             rollout: nil
         )
@@ -238,7 +238,7 @@ struct FlagEvaluatorTests {
             order: 1,
             value: .boolean(true),
             values: nil,
-            conditions: [Condition(type: .platform, values: ["iOS"], operator: .in)],
+            conditions: [Condition(type: .platform, values: ["ios"], operator: .in)],
             test: nil,
             rollout: nil
         )
