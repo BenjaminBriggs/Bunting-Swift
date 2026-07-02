@@ -35,9 +35,10 @@ struct FlagEvaluator {
         for variant in sortedVariants {
             switch variant.type {
             case .conditional:
-                if let conditions = variant.conditions,
-                    conditionEvaluator.evaluateAll(conditions)
-                {
+                // Nil conditions are treated as empty (vacuous match), per
+                // `Variant.conditions`'s doc comment: "If empty or nil, variant
+                // always matches."
+                if conditionEvaluator.evaluateAll(variant.conditions ?? []) {
                     // Conditional variants use the single 'value' property
                     if let value = variant.value {
                         return value
@@ -170,8 +171,8 @@ struct FlagEvaluator {
         for variant in sortedVariants {
             switch variant.type {
             case .conditional:
-                if let conditions = variant.conditions,
-                    conditionEvaluator.evaluateAll(conditions),
+                // Mirrors the vacuous-match treatment of nil conditions in `evaluate(flagKey:)`.
+                if conditionEvaluator.evaluateAll(variant.conditions ?? []),
                     variant.value != nil
                 {
                     return base

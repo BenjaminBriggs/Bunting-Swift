@@ -199,6 +199,111 @@ struct FlagEvaluatorTests {
         #expect(evaluator.evaluate(flagKey: "order_test") == .string("first"))
     }
 
+    // MARK: - Vacuous match (nil/empty conditions)
+
+    @Test("Conditional variant with nil conditions vacuously matches")
+    func nilConditionsVacuouslyMatch() throws {
+        let variant = Variant(
+            type: .conditional,
+            order: 1,
+            value: .string("matched"),
+            values: nil,
+            conditions: nil,
+            test: nil,
+            rollout: nil
+        )
+
+        let flag = Flag(
+            type: .string,
+            description: nil,
+            development: EnvironmentConfig(default: .string("default"), variants: [variant]),
+            beta: EnvironmentConfig(default: .string("default"), variants: []),
+            production: EnvironmentConfig(default: .string("default"), variants: [])
+        )
+
+        let evaluator = FlagEvaluator(
+            configuration: makeConfig(flags: ["greeting": flag]),
+            environment: .development,
+            context: Self.context,
+            localID: UUID(),
+            customAttributeResolver: { _ in false }
+        )
+
+        #expect(evaluator.evaluate(flagKey: "greeting") == .string("matched"))
+    }
+
+    @Test("Conditional variant with empty conditions vacuously matches")
+    func emptyConditionsVacuouslyMatch() throws {
+        let variant = Variant(
+            type: .conditional,
+            order: 1,
+            value: .string("matched"),
+            values: nil,
+            conditions: [],
+            test: nil,
+            rollout: nil
+        )
+
+        let flag = Flag(
+            type: .string,
+            description: nil,
+            development: EnvironmentConfig(default: .string("default"), variants: [variant]),
+            beta: EnvironmentConfig(default: .string("default"), variants: []),
+            production: EnvironmentConfig(default: .string("default"), variants: [])
+        )
+
+        let evaluator = FlagEvaluator(
+            configuration: makeConfig(flags: ["greeting": flag]),
+            environment: .development,
+            context: Self.context,
+            localID: UUID(),
+            customAttributeResolver: { _ in false }
+        )
+
+        #expect(evaluator.evaluate(flagKey: "greeting") == .string("matched"))
+    }
+
+    @Test("A nil-conditions variant at lower order shadows a later variant")
+    func nilConditionsVariantShadowsLaterVariantByOrder() throws {
+        let alwaysMatchesFirst = Variant(
+            type: .conditional,
+            order: 1,
+            value: .string("shadowing-value"),
+            values: nil,
+            conditions: nil,
+            test: nil,
+            rollout: nil
+        )
+        let neverReached = Variant(
+            type: .conditional,
+            order: 2,
+            value: .string("us-value"),
+            values: nil,
+            conditions: [Condition(type: .region, values: ["US"], operator: .in)],
+            test: nil,
+            rollout: nil
+        )
+
+        let flag = Flag(
+            type: .string,
+            description: nil,
+            development: EnvironmentConfig(
+                default: .string("default"), variants: [alwaysMatchesFirst, neverReached]),
+            beta: EnvironmentConfig(default: .string("default"), variants: []),
+            production: EnvironmentConfig(default: .string("default"), variants: [])
+        )
+
+        let evaluator = FlagEvaluator(
+            configuration: makeConfig(flags: ["greeting": flag]),
+            environment: .development,
+            context: Self.context,
+            localID: UUID(),
+            customAttributeResolver: { _ in false }
+        )
+
+        #expect(evaluator.evaluate(flagKey: "greeting") == .string("shadowing-value"))
+    }
+
     // MARK: - Environment selection
 
     @Test("Environment selection picks the matching EnvironmentConfig")

@@ -52,7 +52,7 @@ public struct Variant: Codable, Sendable {
     /// If empty or `nil`, variant always matches (subject to test/rollout qualification).
     ///
     /// Conditions can check:
-    /// - Platform (iOS, macOS, watchOS, tvOS)
+    /// - Platform (ios, macos, watchos, tvos)
     /// - OS version
     /// - App version
     /// - Device model
