@@ -25,10 +25,17 @@ import Foundation
 /// Create a context with current system info using ``current(appVersion:buildNumber:)``
 /// or provide explicit values for testing.
 public struct EvaluationContext: Sendable, Hashable {
-    /// The platform identifier ("iOS", "iPadOS", "macOS", "watchOS", "tvOS", or "unknown")
+    /// The platform identifier ("ios", "macos", "watchos", "tvos", "visionos", or "unknown")
     ///
     /// Used to evaluate platform-specific flag variants (e.g., iOS-only features).
     public let platform: String
+
+    /// The device form factor ("phone", "tablet", "desktop", "tv", "watch", "headset"),
+    /// or `nil` if the platform does not populate it.
+    ///
+    /// Orthogonal to ``platform``: an iPad is `platform: "ios"` + `deviceClass: "tablet"`.
+    /// Per the two-axis contract, a `device_class` condition against a `nil` value never matches.
+    public let deviceClass: String?
 
     /// The operating system version string (e.g., "18.1")
     ///
@@ -47,7 +54,7 @@ public struct EvaluationContext: Sendable, Hashable {
 
     /// The device model (e.g., "iPhone", "iPad", "Mac")
     ///
-    /// Used to evaluate device-type specific flags (phone vs tablet vs desktop).
+    /// Form factor (phone vs tablet vs desktop) lives in ``deviceClass``, not here.
     public let deviceModel: String
 
     /// The user's region identifier (e.g., "US", "GB", "FR"), or `nil` if not set
@@ -61,6 +68,10 @@ public struct EvaluationContext: Sendable, Hashable {
     /// language-specific feature targeting.
     public let language: String
 
+    /// SDK-populated reserved attributes (e.g. `["manufacturer": "apple"]`), keyed by
+    /// attribute name. Conditions target these through the `custom_attribute` machinery.
+    public let reservedAttributes: [String: String]
+
     /// Creates an evaluation context with explicit values
     ///
     /// - Parameters:
@@ -71,6 +82,8 @@ public struct EvaluationContext: Sendable, Hashable {
     ///   - deviceModel: Device model string
     ///   - region: User's region identifier (country code)
     ///   - language: User's language code
+    ///   - deviceClass: Device form factor
+    ///   - reservedAttributes: SDK-populated reserved attributes
     public init(
         platform: String,
         osVersion: String,
@@ -78,7 +91,9 @@ public struct EvaluationContext: Sendable, Hashable {
         buildNumber: String,
         deviceModel: String,
         region: String?,
-        language: String
+        language: String,
+        deviceClass: String? = nil,
+        reservedAttributes: [String: String] = [:]
     ) {
         self.platform = platform
         self.osVersion = osVersion
@@ -87,6 +102,8 @@ public struct EvaluationContext: Sendable, Hashable {
         self.deviceModel = deviceModel
         self.region = region
         self.language = language
+        self.deviceClass = deviceClass
+        self.reservedAttributes = reservedAttributes
     }
 
     /// Resolver for custom flag attributes
@@ -121,6 +138,8 @@ public struct EvaluationContext: Sendable, Hashable {
         hasher.combine(appVersion)
         hasher.combine(buildNumber)
         hasher.combine(deviceModel)
+        hasher.combine(deviceClass)
+        hasher.combine(reservedAttributes)
         hasher.combine(region)
         hasher.combine(language)
         return hasher.finalize()
@@ -151,18 +170,32 @@ public struct EvaluationContext: Sendable, Hashable {
         buildNumber: String? = nil
     ) -> EvaluationContext {
         let platform: String
+        let deviceClass: String?
+        let reservedAttributes: [String: String]
         #if os(iOS)
-            platform = UIDevice.current.userInterfaceIdiom == .pad ? "iPadOS" : "iOS"
+            platform = "ios"
+            deviceClass = UIDevice.current.userInterfaceIdiom == .pad ? "tablet" : "phone"
+            reservedAttributes = ["manufacturer": "apple"]
         #elseif os(macOS)
-            platform = "macOS"
+            platform = "macos"
+            deviceClass = "desktop"
+            reservedAttributes = ["manufacturer": "apple"]
         #elseif os(watchOS)
-            platform = "watchOS"
+            platform = "watchos"
+            deviceClass = "watch"
+            reservedAttributes = ["manufacturer": "apple"]
         #elseif os(tvOS)
-            platform = "tvOS"
+            platform = "tvos"
+            deviceClass = "tv"
+            reservedAttributes = ["manufacturer": "apple"]
         #elseif os(visionOS)
-            platform = "visionOS"
+            platform = "visionos"
+            deviceClass = "headset"
+            reservedAttributes = ["manufacturer": "apple"]
         #else
             platform = "unknown"
+            deviceClass = nil
+            reservedAttributes = [:]
         #endif
 
         let osVersion = ProcessInfo.processInfo.operatingSystemVersionString
@@ -197,7 +230,9 @@ public struct EvaluationContext: Sendable, Hashable {
             buildNumber: resolvedBuildNumber,
             deviceModel: deviceModel,
             region: region,
-            language: language
+            language: language,
+            deviceClass: deviceClass,
+            reservedAttributes: reservedAttributes
         )
     }
 }
