@@ -1,6 +1,13 @@
+<div align="center">
+  <img src="docs/assets/logotype-swift.png" alt="Bunting Swift SDK" width="400" />
+</div>
+
 # Bunting Swift SDK
 
 A self-hosted, open-source feature flag and rollout system for Apple platforms.
+
+> [!TIP]
+> Full documentation for the dashboard, SDK integration, and self-hosting lives at **[benjaminbriggs.github.io/Bunting-Documentation](https://benjaminbriggs.github.io/Bunting-Documentation/)**.
 
 ## Features
 
@@ -9,6 +16,7 @@ A self-hosted, open-source feature flag and rollout system for Apple platforms.
 - **Secure**: JWS signature verification with RS256
 - **Privacy-Preserving**: Deterministic bucketing with device-local UUID
 - **Multi-Environment**: Support for development, beta, and production
+- **Config Fingerprint**: Compact code capturing exactly which value every flag resolved to on a device; paste it into the admin to decode a user's flag state for support and bug reports
 - **Debug UI**: Built-in override and inspection tools
 - **Build Resilient**: Codegen never fails builds — automatically falls back when config is missing
 
